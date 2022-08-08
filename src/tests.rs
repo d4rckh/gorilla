@@ -54,7 +54,7 @@ mod mutation_tests {
         }
       ] 
     };
-    assert_eq!(mutation_set.perform("word"), vec!["abcdrowabc"])
+    assert_eq!(mutation_set.perform("word").mutated_words, vec!["abcdrowabc"])
   }
 
   #[test]
@@ -68,7 +68,7 @@ mod mutation_tests {
         }
       ] 
     };
-    assert_eq!(mutation_set.perform("word"), vec![
+    assert_eq!(mutation_set.perform("word").mutated_words, vec![
       "word0", "word1", "word2", "word3", "word4", 
       "word5", "word6", "word7", "word8",  "word9" 
     ])
@@ -84,7 +84,7 @@ mod yaml_test {
     let mutation_sets = get_mutation_sets("name: alphabet
 mutation_sets:
   - [ wipe, \"append:{a-z}\" ] # => a, b, c, ..., z");
-  
-    assert_eq!(mutation_sets[0].perform("word").len(), 26); 
+
+    assert_eq!(mutation_sets[0].perform("word").mutated_words.len(), 26); 
   }
 }

@@ -1,4 +1,4 @@
-use std::{fmt::{Display, self}};
+use std::{fmt::{Display, self}, fs, io::Write};
 
 use crate::formatting::{tokenize_format_string, execute_format_string};
 
@@ -31,8 +31,22 @@ pub struct MutationSet {
   pub mutations: Vec<Mutation>
 }
 
+pub struct MutationResult {
+  pub original_word: String,
+  pub mutated_words: Vec<String>
+}
+
+impl MutationResult {
+  pub fn save_to_file(&self, file: &mut fs::File) {
+    for mutated in &self.mutated_words {
+      let log_entry = format!("{}\n", mutated);
+      file.write_all(log_entry.as_bytes()).expect("write failed");  
+    }
+  }
+}
+
 impl MutationSet {
-  pub fn perform(&self, word: &str) -> Vec<String> {
+  pub fn perform(&self, word: &str) -> MutationResult {
     let mut result = vec![ word.to_string() ];
 
     for mutation in &self.mutations {
@@ -45,7 +59,10 @@ impl MutationSet {
       result = new_result    
     }
   
-    result
+    MutationResult {
+      original_word: word.to_owned(),
+      mutated_words: result
+    }
   }
 }
 

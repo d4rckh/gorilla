@@ -5,7 +5,7 @@ mod yaml_parser;
 mod tests;
 
 use std::{
-  fs::{File, self}, 
+  fs::{File, self, OpenOptions}, 
   io::{ BufReader, BufRead }
 };
 
@@ -45,11 +45,22 @@ fn main() {
     println!()
   }
 
+  let mut save_file_option = None;
+
+  if let Some(file_save) = args.file_save {
+    println!("gorilla: using file {} as output", file_save.purple());
+    save_file_option = Some(OpenOptions::new()
+      .append(true)
+      .open(&file_save)
+      .expect("Could not open file")
+    )
+  }
+
   let mut word_counter = 0;
   let mut mutation_counter = 0;
 
   if let Some(file_input) = args.file_input {
-    println!("gorilla: using file {} as input", file_input.purple());
+    println!("gorilla: reading words from {}", file_input.purple());
 
     let file_input = File::open(&file_input).unwrap();
     let reader = BufReader::new(file_input);
@@ -61,10 +72,16 @@ fn main() {
       for mutation_set in &mutation_sets {
         let mut result = mutation_set.perform(&line);
 
-        if args.keep_original { result.push(line.clone()); } 
+        if args.keep_original { result.mutated_words.push(line.clone()); } 
 
-        for s in result {
-          println!("{}", s);
+        if let Some(save_file) = &mut save_file_option {
+          result.save_to_file(save_file)
+        }
+
+        for s in result.mutated_words {
+          if save_file_option.is_none() { 
+            println!("{}", s);
+          }
           mutation_counter += 1
         }
       }
