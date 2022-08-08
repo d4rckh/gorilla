@@ -15,6 +15,13 @@ pub struct ProgramArgs {
   )]
   pub file_input: Option<String>,
 
+  #[clap (
+    short='p',
+    long="from-pattern",
+    help="Generate words from a pattern"
+  )]
+  pub pattern_input: Option<String>,
+
   #[clap(
       short='o', 
       long="output", 
