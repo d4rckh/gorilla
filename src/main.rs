@@ -8,41 +8,25 @@ use std::{
 
 use clap::Parser;
 use colored::Colorize;
+use mutation::MutationSet;
 
 use crate::{
   arguments::{ProgramArgs}, 
-  mutation::{ parse_mutation_string, mutate_word, mutate_words }
+  mutation::{ parse_mutation_string }
 };
 
 fn main() {
   let args = ProgramArgs::parse();
   
-  let mutations = parse_mutation_string(&args.mutation_string);
-  let mutations1 = parse_mutation_string(&args.mutation1_string);
-  let mutations2 = parse_mutation_string(&args.mutation2_string);
+  let mutation_set = MutationSet {
+    mutations: parse_mutation_string(&args.mutation_string) 
+  };
 
-  if mutations.len() < 1 && mutations1.len() < 1 && mutations2.len() < 1  {
-    println!("warning: no mutations specified");
-  }
-  
-  if mutations.len() > 0 {
-    println!("gorilla: default mutation set summary");
-    for mutation in &mutations {
-      println!("    | {}", mutation.to_string().blue());
-    }
-  }
-
-  if mutations1.len() > 0 {
-    println!("gorilla: first mutation set summary");
-    for mutation in &mutations1 {
-      println!("    | {}", mutation.to_string().blue());
-    }
-  }
-
-  if mutations2.len() > 0 {
-    println!("gorilla: second mutation set summary");
-    for mutation in &mutations2 {
-      println!("    | {}", mutation.to_string().blue());
+  if mutation_set.mutations.len() < 1  {
+    println!("warning: mutation set empty");
+  } else {
+    for mutation in &mutation_set.mutations {
+      println!("  - {}", mutation.to_string().blue());
     }
   }
 
@@ -53,21 +37,14 @@ fn main() {
     let reader = BufReader::new(file_input);
     let words_iter = reader.lines();
     
-    for (i, l) in words_iter.enumerate() {
+    for (_, l) in words_iter.enumerate() {
       let line = l.unwrap();
-      let default_result = mutate_word(&mutations, &line);
-      let result = mutate_words(&mutations1, &default_result);
+      let mut result = mutation_set.perform(&line);
 
-      if mutations2.len() > 0 {
-        let result2 = mutate_words(&mutations2, &default_result);
-        for s in result2 {
-          println!("{}. {} -> {}", i, line, s);
-        }
-  
-      }
+      if args.keep_original { result.push(line.clone()); } 
 
       for s in result {
-        println!("{}. {} -> {}", i, line, s);
+        println!("{}", s);
       }
     }
   }

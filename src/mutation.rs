@@ -1,4 +1,4 @@
-use std::fmt::{Display, self};
+use std::{fmt::{Display, self}, env::args};
 
 #[derive(Debug)]
 pub enum Action {
@@ -13,13 +13,38 @@ pub enum Action {
 
 #[derive(Debug)]
 pub enum MutationBuildError {
-  ActionDoesNotExist
+  ActionDoesNotExist,
+  MissingArguments
 }
 
 pub struct Mutation {
   pub action: Action,
   pub times: u32,
   pub keep_original: bool
+}
+
+pub struct MutationSet {
+  pub mutations: Vec<Mutation>
+}
+
+impl MutationSet {
+  pub fn perform(&self, word: &str) -> Vec<String> {
+    let mut result = vec![ word.to_string() ];
+
+    for mutation in &self.mutations {
+      for _ in 0..mutation.times {
+        let mut new_result: Vec<String> = vec![ ];
+        for s in result {
+            for s1 in mutation.perform(&s) {
+                new_result.push(s1);
+            }
+        }
+        result = new_result    
+      }
+    }
+  
+    result
+  }
 }
 
 impl Mutation {
@@ -72,45 +97,35 @@ impl Display for Mutation {
 //   mutation { action }
 // }
 
+macro_rules! check_action_args {
+  ($action:expr, $requiredArgs:expr, $actualArgs:expr) => {
+    if $actualArgs > ($requiredArgs-1) {
+      Ok($action)
+    } else {
+      Err(MutationBuildError::MissingArguments)
+    }
+  };
+}
+
 pub fn build_action(action: &str, arguments: Vec<&str>) -> Result<Action, MutationBuildError> {
+  let argc = arguments.len();
+
   match action {
-    "prepend" => Ok(Action::Prepend(arguments[0].to_owned())),
-    "append" => Ok(Action::Append(arguments[0].to_owned())),
-    "replace" => Ok(Action::Replace(arguments[0].to_owned(), arguments[1].to_owned())), 
+    "prepend" => {
+      check_action_args!(Action::Prepend(arguments[0].to_owned()), 1, argc)
+    },
+    "append" => {
+      check_action_args!(Action::Append(arguments[0].to_owned()), 1, argc)
+    },
+    "replace" => {
+      check_action_args!(Action::Replace(arguments[0].to_owned(), arguments[1].to_owned()), 2, argc)
+    }, 
     "reverse" => Ok(Action::Reverse), 
     "clone" => Ok(Action::Clone), 
     "wipe" => Ok(Action::Wipe), 
     "nothing" => Ok(Action::Nothing), 
     _ => Err(MutationBuildError::ActionDoesNotExist),
   }
-}
-
-pub fn mutate_word(mutations: &Vec<Mutation>, word: &str) -> Vec<String> {
-  let mut result = vec![ word.to_string() ];
-
-  for mutation in mutations {
-    for _ in 0..mutation.times {
-      let mut new_result: Vec<String> = vec![ ];
-      for s in result {
-          for s1 in mutation.perform(&s) {
-              new_result.push(s1);
-          }
-      }
-      result = new_result    
-    }
-  }
-
-  result
-}
-
-pub fn mutate_words(mutations: &Vec<Mutation>, words: &Vec<String>) -> Vec<String> {
-  let mut result: Vec<String> = vec![];
-  for word in words {
-    for res in mutate_word(mutations, &word) {
-      result.push(res)
-    }
-  }
-  return result
 }
 
 pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {

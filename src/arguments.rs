@@ -30,18 +30,11 @@ pub struct ProgramArgs {
   pub mutation_string: Vec<String>,
 
   #[clap(
-    short='1',
-    long="mutation1",
-    help="Mutate the word in a way (mutations from -m/--mutations apply before), pair with -2/--mutation2 to mutate the word in 2 different ways using the cli"
+    short='k',
+    long="keep-original",
+    help="Keep the original word"
   )]
-  pub mutation1_string: Vec<String>,
-
-  #[clap(
-    short='2',
-    long="mutation2",
-    help="Mutate the word in a way (mutations from -m/--mutations apply before), pair with -1/--mutation1 to mutate the word in 2 different ways using the cli"
-  )]
-  pub mutation2_string: Vec<String>,
+  pub keep_original: bool,
 
   #[clap(subcommand)]
   pub command: Option<Commands>
