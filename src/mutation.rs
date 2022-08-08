@@ -187,5 +187,5 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
     }
   }
 
-  return mutations
+  mutations
 }

@@ -2,6 +2,7 @@ mod arguments;
 mod mutation;
 mod formatting;
 mod yaml_parser;
+mod tests;
 
 use std::{
   fs::{File, self}, 
@@ -70,6 +71,10 @@ fn main() {
     }
   }
 
-  println!("gorilla: {}. {} words -> {} words", "finished".green().bold() ,word_counter.to_string().red(), mutation_counter.to_string().green())
+  println!("gorilla: {}. {} words -> {} words", 
+    "finished".green().bold(),
+    word_counter.to_string().red(), 
+    mutation_counter.to_string().green()
+  )
 
 }

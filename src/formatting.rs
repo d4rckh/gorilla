@@ -1,6 +1,6 @@
 use std::{fmt::{Display, self}, vec};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Token {
   String(String),
   Repeat(u32, u32)
