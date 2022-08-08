@@ -1,0 +1,54 @@
+use clap::{Parser, Subcommand};
+
+#[derive(Parser, Debug)]
+#[clap(
+    author="d4rckh", 
+    version="v1.0", 
+    about="a wordlist generator", 
+    long_about="if you want to contribute to this project, check out the github repo: https://github.com/d4rckh/gorilla",
+)]
+pub struct ProgramArgs {
+  #[clap (
+    short='i',
+    long="input",
+    help="Specify the input file"
+  )]
+  pub file_input: Option<String>,
+
+  #[clap(
+      short='o', 
+      long="output", 
+      help="Specify the file in which the results will be saved"
+  )]
+  pub file_save: Option<String>,
+
+  #[clap(
+    short='m',
+    long="mutation",
+    help="Specify a way to mutate the words. Format is action:param1,param2"
+  )]
+  pub mutation_string: Vec<String>,
+
+  #[clap(
+    short='1',
+    long="mutation1",
+    help="Mutate the word in a way (mutations from -m/--mutations apply before), pair with -2/--mutation2 to mutate the word in 2 different ways using the cli"
+  )]
+  pub mutation1_string: Vec<String>,
+
+  #[clap(
+    short='2',
+    long="mutation2",
+    help="Mutate the word in a way (mutations from -m/--mutations apply before), pair with -1/--mutation1 to mutate the word in 2 different ways using the cli"
+  )]
+  pub mutation2_string: Vec<String>,
+
+  #[clap(subcommand)]
+  pub command: Option<Commands>
+}
+
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    // does testing things
+    // list_mutations {    },
+}
