@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 clap = { version = "3.2.16", features = ["derive"] }
 colored = "2.0.0"
+yaml-rust = "0.4.5"

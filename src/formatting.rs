@@ -22,13 +22,13 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
   let mut cur = String::new();
 
   for character in input.chars() {
-    if character == '[' {
+    if character == '{' {
       inside_repeat = !inside_repeat;
       result.push(
         Token::String(cur.clone())
       );
       cur.clear();
-    } else if character == ']' {
+    } else if character == '}' {
       inside_repeat = !inside_repeat;
       let ch_start = cur.chars().nth(0).unwrap();
       let ch_end = cur.chars().nth(2).unwrap();

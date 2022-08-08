@@ -21,7 +21,7 @@ pub enum MutationBuildError {
 
 pub struct Mutation {
   pub action: Action,
-  pub times: u32,
+  pub times: usize,
   pub keep_original: bool
 }
 
@@ -34,15 +34,13 @@ impl MutationSet {
     let mut result = vec![ word.to_string() ];
 
     for mutation in &self.mutations {
-      for _ in 0..mutation.times {
-        let mut new_result: Vec<String> = vec![ ];
-        for s in result {
-            for s1 in mutation.perform(&s) {
-                new_result.push(s1);
-            }
+      let mut new_result: Vec<String> = vec![ ];
+      for s in result {
+        for s1 in mutation.perform(&s) {
+          new_result.push(s1);
         }
-        result = new_result    
       }
+      result = new_result    
     }
   
     result
@@ -61,13 +59,13 @@ impl Mutation {
       Action::Prepend(s) => {
         let tokens = tokenize_format_string(s);
         for word in execute_format_string(&tokens) {
-          result.push(format!("{}{}", word, input))
+          result.push(format!("{}{}", word.repeat(self.times), input))
         }
       },
       Action::Append(s) => {
         let tokens = tokenize_format_string(s);
         for word in execute_format_string(&tokens) {
-          result.push(format!("{}{}", input, word))
+          result.push(format!("{}{}", input, word.repeat(self.times)))
         }
       },
       Action::Replace(s, b) => {
@@ -150,10 +148,9 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
       .map(|x| x.trim())
       .collect();
     let mut mutation_action = mutation_split[0].trim();
-    let mut mutation_runtimes: u32 = 1;
+    let mut mutation_runtimes: usize = 1;
     let mut mutation_options: &str = "";
     
-    // check if user wants to run a mutation multiple times
     if mutation_action.contains(" ") {
       let mutation_action_split: Vec<&str> = mutation_action
         .split(" ")

@@ -1,5 +1,0 @@
-name: simple
-
-mutation_sets:
-  - [ nothing ] # => word
-  - [ "append:{0-9}" ] # => word1, word2, word3

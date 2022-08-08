@@ -30,6 +30,13 @@ pub struct ProgramArgs {
   pub mutation_string: Vec<String>,
 
   #[clap(
+    short='f',
+    long="mutations-file",
+    help="Specify a path to a yaml file"
+  )]
+  pub mutations_file: String,
+
+  #[clap(
     short='k',
     long="keep-original",
     help="Keep the original word"
