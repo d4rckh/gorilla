@@ -1,5 +1,7 @@
 use std::{fmt::{Display, self}};
 
+use crate::formatting::{tokenize_format_string, execute_format_string};
+
 #[derive(Debug)]
 pub enum Action {
   Prepend(String),
@@ -56,8 +58,18 @@ impl Mutation {
     }
 
     match &self.action {
-      Action::Prepend(s) => result.push(format!("{}{}", s, input)),
-      Action::Append(s) => result.push(format!("{}{}", input, s)),
+      Action::Prepend(s) => {
+        let tokens = tokenize_format_string(s);
+        for word in execute_format_string(&tokens) {
+          result.push(format!("{}{}", word, input))
+        }
+      },
+      Action::Append(s) => {
+        let tokens = tokenize_format_string(s);
+        for word in execute_format_string(&tokens) {
+          result.push(format!("{}{}", input, word))
+        }
+      },
       Action::Replace(s, b) => {
         if input.contains(s) || !self.keep_original { result.push(input.replace(s, b)) }
       },

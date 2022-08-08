@@ -1,5 +1,6 @@
 mod arguments;
 mod mutation;
+mod formatting;
 
 use std::{
   fs::File, 
@@ -25,6 +26,7 @@ fn main() {
   if mutation_set.mutations.len() < 1  {
     println!("warning: mutation set empty");
   } else {
+    println!("gorilla: mutation set summary");
     for mutation in &mutation_set.mutations {
       println!("  - {}", mutation.to_string().blue());
     }
