@@ -1,0 +1,5 @@
+name: alphabet
+
+mutation_sets:
+  - [ wipe, "append:{a-z}" ] # => a, b, c, ..., z
+  - [ wipe, "append:{A-Z}" ] # => A, B, C, ..., Z

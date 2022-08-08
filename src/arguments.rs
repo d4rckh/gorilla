@@ -34,7 +34,7 @@ pub struct ProgramArgs {
     long="mutations-file",
     help="Specify a path to a yaml file"
   )]
-  pub mutations_file: String,
+  pub mutations_file: Option<String>,
 
   #[clap(
     short='k',

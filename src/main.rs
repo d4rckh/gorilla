@@ -1,14 +1,12 @@
 mod arguments;
 mod mutation;
 mod formatting;
+mod yaml_parser;
 
 use std::{
   fs::{File, self}, 
   io::{ BufReader, BufRead }
 };
-
-extern crate yaml_rust;
-use yaml_rust::{YamlLoader};
 
 use clap::Parser;
 use colored::Colorize;
@@ -16,7 +14,7 @@ use mutation::MutationSet;
 
 use crate::{
   arguments::{ProgramArgs}, 
-  mutation::{ parse_mutation_string }
+  mutation::{ parse_mutation_string }, yaml_parser::get_mutation_sets
 };
 
 fn main() {
@@ -32,28 +30,9 @@ fn main() {
     )
   }
 
-  let docs = YamlLoader::load_from_str(
-    &fs::read_to_string(&args.mutations_file).unwrap()
-  ).unwrap();
-
-  let doc = &docs[0];
-
-  println!("gorilla: loading {} yaml mutations from {}", 
-    doc["name"].as_str().unwrap().purple(),
-    args.mutations_file.purple()
-  );
-
-  for mutation_set in doc["mutation_sets"].as_vec().unwrap() {
-    let mut mutation_strings: Vec<String> = vec![];
-    for yaml_mut_string in mutation_set.as_vec().unwrap() {
-      mutation_strings.push(yaml_mut_string.as_str().unwrap().to_string());
-    }
-
-    mutation_sets.push( 
-      MutationSet {
-        mutations: parse_mutation_string(&mutation_strings)
-      } 
-    ) 
+  if let Some(mutations_file) = args.mutations_file { 
+    let yaml_input = &fs::read_to_string(&mutations_file).unwrap();
+    mutation_sets.append(&mut get_mutation_sets(yaml_input))
   }
 
   println!("gorilla: mutation sets summary");

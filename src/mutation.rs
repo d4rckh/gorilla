@@ -7,6 +7,8 @@ pub enum Action {
   Prepend(String),
   Append(String),
   Replace(String, String),
+  LowercaseAll,
+  UppercaseAll,
   Clone,
   Reverse,
   Wipe,
@@ -72,12 +74,14 @@ impl Mutation {
         if input.contains(s) || !self.keep_original { result.push(input.replace(s, b)) }
       },
       Action::Reverse => result.push(input.chars().rev().collect()),
+      Action::UppercaseAll => result.push(input.to_uppercase()),
+      Action::LowercaseAll => result.push(input.to_lowercase()),
       Action::Clone => result.append(&mut vec![input.to_owned(), input.to_owned()]),
       Action::Wipe => result.push(String::new()),
       Action::Nothing => result.push(input.to_owned()),
     }
 
-    return result
+    result
   }
 }
 
@@ -93,6 +97,8 @@ impl Display for Mutation {
       Action::Clone => write!(f, "clone"),
       Action::Wipe => write!(f, "wipe"),
       Action::Nothing => write!(f, "nothing"),
+      Action::UppercaseAll => write!(f, "uppercase all"),
+      Action::LowercaseAll => write!(f, "lowercase all"),
     }?;
 
     if self.keep_original {
@@ -134,6 +140,8 @@ pub fn build_action(action: &str, arguments: Vec<&str>) -> Result<Action, Mutati
     "clone" => Ok(Action::Clone), 
     "wipe" => Ok(Action::Wipe), 
     "nothing" => Ok(Action::Nothing), 
+    "uppercase_all" => Ok(Action::UppercaseAll), 
+    "lowercase_all" => Ok(Action::LowercaseAll), 
     _ => Err(MutationBuildError::ActionDoesNotExist),
   }
 }
