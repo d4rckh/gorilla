@@ -1,4 +1,4 @@
-use std::{fmt::{Display, self}, env::args};
+use std::{fmt::{Display, self}};
 
 #[derive(Debug)]
 pub enum Action {
