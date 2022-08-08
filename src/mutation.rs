@@ -18,26 +18,38 @@ pub enum MutationBuildError {
 
 pub struct Mutation {
   pub action: Action,
-  pub times: u32
+  pub times: u32,
+  pub keep_original: bool
 }
 
 impl Mutation {
   pub fn perform(&self, input: &str) -> Vec<String> {
-    match &self.action {
-      Action::Prepend(s) => vec![ format!("{}{}", s, input) ],
-      Action::Append(s) => vec![ format!("{}{}", input, s) ],
-      Action::Replace(s, b) => vec![ input.replace(s, b) ],
-      Action::Reverse => vec![ input.chars().rev().collect() ],
-      Action::Clone => vec![ input.to_owned(), input.to_owned() ],
-      Action::Wipe => vec![ String::new() ],
-      Action::Nothing => vec![ input.to_owned() ],
+    let mut result: Vec<String> = vec![];
+
+    if self.keep_original {
+      result.push(input.to_owned());
     }
+
+    match &self.action {
+      Action::Prepend(s) => result.push(format!("{}{}", s, input)),
+      Action::Append(s) => result.push(format!("{}{}", input, s)),
+      Action::Replace(s, b) => {
+        if input.contains(s) || !self.keep_original { result.push(input.replace(s, b)) }
+      },
+      Action::Reverse => result.push(input.chars().rev().collect()),
+      Action::Clone => result.append(&mut vec![input.to_owned(), input.to_owned()]),
+      Action::Wipe => result.push(String::new()),
+      Action::Nothing => result.push(input.to_owned()),
+    }
+
+    return result
   }
 }
 
 impl Display for Mutation {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     if self.times > 1 { write!(f, "{}x ", self.times )?; }
+
     match &self.action {
       Action::Prepend(s) => write!(f, "prepend: {}", s),
       Action::Append(s) => write!(f, "append: {}", s),
@@ -46,29 +58,29 @@ impl Display for Mutation {
       Action::Clone => write!(f, "clone"),
       Action::Wipe => write!(f, "wipe"),
       Action::Nothing => write!(f, "nothing"),
+    }?;
+
+    if self.keep_original {
+      write!(f, " (keeping original)")
+    } else {
+      write!(f, "")
     }
   }
 } 
-
-macro_rules! build_mutation {
-  ($x:expr) => { Mutation { action: $x, times: 1 } };
-  ($x:expr, $y:expr) => { Mutation { action: $x, times: $y } };
-  () => { mutation { action: Action::Nothing, times: 1 } };
-}
 
 // pub fn build_mutation(action: Action, repeat: Option<u32>) -> mutation {
 //   mutation { action }
 // }
 
-pub fn generate_mutation(action: &str, arguments: Vec<&str>, times: u32) -> Result<Mutation, MutationBuildError> {
+pub fn build_action(action: &str, arguments: Vec<&str>) -> Result<Action, MutationBuildError> {
   match action {
-    "prepend" => Ok(build_mutation!(Action::Prepend(arguments[0].to_owned()), times)),
-    "append" => Ok(build_mutation!(Action::Append(arguments[0].to_owned()), times)),
-    "reverse" => Ok(build_mutation!(Action::Reverse, times)), 
-    "clone" => Ok(build_mutation!(Action::Clone, times)), 
-    "wipe" => Ok(build_mutation!(Action::Wipe, times)), 
-    "replace" => Ok(build_mutation!(Action::Replace(arguments[0].to_owned(), arguments[1].to_owned()), times)), 
-    "nothing" => Ok(build_mutation!(Action::Nothing, times)), 
+    "prepend" => Ok(Action::Prepend(arguments[0].to_owned())),
+    "append" => Ok(Action::Append(arguments[0].to_owned())),
+    "replace" => Ok(Action::Replace(arguments[0].to_owned(), arguments[1].to_owned())), 
+    "reverse" => Ok(Action::Reverse), 
+    "clone" => Ok(Action::Clone), 
+    "wipe" => Ok(Action::Wipe), 
+    "nothing" => Ok(Action::Nothing), 
     _ => Err(MutationBuildError::ActionDoesNotExist),
   }
 }
@@ -112,6 +124,7 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
       .collect();
     let mut mutation_action = mutation_split[0].trim();
     let mut mutation_runtimes: u32 = 1;
+    let mut mutation_options: &str = "";
     
     // check if user wants to run a mutation multiple times
     if mutation_action.contains(" ") {
@@ -119,15 +132,25 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
         .split(" ")
         .collect();
       if mutation_action_split.len() > 1 {
-        mutation_action = mutation_action_split[1];
-        mutation_runtimes = mutation_action_split[0].parse().unwrap();
+        mutation_action = mutation_action_split.last().unwrap();
+        match mutation_action_split[0].parse() {
+          Ok(f) => mutation_runtimes = f,
+          Err(_) => {
+            mutation_options = mutation_action_split[0]
+          }
+        }
+      }
+      if mutation_action_split.len() > 2 {
+        mutation_options = mutation_action_split[1];
       }
     }
 
     mutation_split.remove(0);
 
-    match generate_mutation(mutation_action, mutation_split, mutation_runtimes) {
-      Ok(m) => mutations.push(m),
+    match build_action(mutation_action, mutation_split) {
+      Ok(m) => {
+        mutations.push(Mutation { action: m, times: mutation_runtimes, keep_original: mutation_options.contains("k") })
+      },
       Err(e) => println!("warning: couldn't build mutation {} ({:?})", mutation_action, e)
     }
   }
