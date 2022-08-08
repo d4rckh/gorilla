@@ -1,0 +1,4 @@
+name: ascii
+
+mutation_sets:
+  - [ wipe, "append:{ -~}" ] 
