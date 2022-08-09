@@ -53,31 +53,50 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
   result
 }
 
-pub struct Tokens {
-  pub toks: Vec<Token> 
+pub struct TokenIter {
+  pub toks: Vec<Token>,
+  done: bool
 }
 
-impl Iterator for Tokens {
+pub fn token_iterator(tokens: &Vec<Token>) -> TokenIter {
+  TokenIter { toks: tokens.clone(), done: false }
+}
+
+impl Iterator for TokenIter {
   type Item = String;
 
   fn next(&mut self) -> Option<Self::Item> {
+    if self.done { 
+      return None;
+    }
+    
     let mut result = String::new();
     let mut inc_next = true;
 
+    let repeat_len = self.toks.iter()
+      .filter(|e| matches!(e, Token::Repeat(_, _, _)))
+      .count();
+    let mut current_tok = 1;
     for tok in &mut self.toks {
       match tok {
         Token::String(s) => result.push_str(s),
         Token::Repeat(start, end, cur) => {
-          result.push(char::from_u32(*cur).unwrap());
+          result.push(char::from_u32(*cur).unwrap());          
           if inc_next {
-            if cur >= end {
+            if cur == end {
               inc_next = true;
-              *cur = *start
+              *cur = *start;
+              if current_tok == repeat_len {
+                self.done = true;
+                return Some(result)
+              }
             } else {
               inc_next = false;
               *cur += 1
-            } 
+            }
           } 
+          current_tok += 1;
+
         }
       }
     }
@@ -87,17 +106,17 @@ impl Iterator for Tokens {
 
 }
 
-impl Tokens {
-  pub fn calculate_total(&self) -> usize {
-    let mut result: u32 = 1;
+impl TokenIter {
+  pub fn calculate_total(&self) -> u128 {
+    let mut result: u128 = 1;
 
     for tok in &self.toks {
       if let Token::Repeat(start, end, _) = tok {
-        result *= end - start + 1
+        result *= (*end as u128) - (*start as u128) + 1
       }
     }
 
-    result.try_into().unwrap()
+    result
   }
 }
 

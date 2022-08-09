@@ -19,7 +19,7 @@ use crate::{
   arguments::ProgramArgs, 
   mutation::{parse_mutation_string, MutationSet}, 
   yaml_parser::get_mutation_sets, 
-  formatting::{tokenize_format_string, Tokens},
+  formatting::{tokenize_format_string, token_iterator},
   website_scraper::{download_page, extract_words}
 };
 
@@ -115,12 +115,12 @@ async fn main() -> Result<(), reqwest::Error> {
   if let Some(pattern_input) = &gorilla.program_args.pattern_input {
     
     let tokens = tokenize_format_string(pattern_input);
-    let ac_toks = Tokens { toks: tokens.clone() };
+    let ac_toks = token_iterator(&tokens);
     let total_words = ac_toks.calculate_total();
     
     println!("gorilla: will generate {} words from a pattern {}", total_words, pattern_input.purple());
 
-    for word in ac_toks.take(total_words) {
+    for word in ac_toks {
       gorilla.mutate_word(word);
     }
   }

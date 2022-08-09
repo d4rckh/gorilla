@@ -1,6 +1,6 @@
 use std::{fmt::{Display, self}, fs, io::Write, cmp::Ordering};
 
-use crate::formatting::{tokenize_format_string, Tokens};
+use crate::formatting::{tokenize_format_string, token_iterator};
 
 #[derive(Debug)]
 pub enum Action {
@@ -77,20 +77,12 @@ impl Mutation {
 
     match &self.action {
       Action::Prepend(s) => {
-        let ac_toks = Tokens { 
-          toks: tokenize_format_string(s)
-        };
-        let total_words = ac_toks.calculate_total();
-        for word in ac_toks.take(total_words) {
+        for word in token_iterator(&tokenize_format_string(s)) {
           result.push(format!("{}{}", word.repeat(self.times), input))
         }
       },
       Action::Append(s) => {
-        let ac_toks = Tokens { 
-          toks: tokenize_format_string(s)
-        };
-        let total_words = ac_toks.calculate_total();
-        for word in ac_toks.take(total_words) {
+        for word in token_iterator(&tokenize_format_string(s)) {
           result.push(format!("{}{}", input, word.repeat(self.times)))
         }
       },

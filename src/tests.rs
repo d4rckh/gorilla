@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod token_tests {
-  use crate::formatting::{tokenize_format_string, Token, Tokens};
+  use crate::formatting::{tokenize_format_string, token_iterator, Token};
 
   #[test]
   fn tokenize_string_repeat() {
@@ -16,22 +16,16 @@ mod token_tests {
 
   #[test]
   fn tokenize_execute_letters() {
-    let ac_toks = Tokens { 
-      toks: tokenize_format_string("{a-z}{a-z}")
-    };
-    let total = ac_toks.calculate_total();
-    let result: Vec<String> = ac_toks.take(total).collect();
+    let ac_toks = token_iterator(&tokenize_format_string("{a-z}{a-z}"));
+    let result: Vec<String> = ac_toks.collect();
     
     assert_eq!(result.len(), 26*26)
   }
 
   #[test]
   fn tokenize_execute_ascii() {
-    let ac_toks = Tokens { 
-      toks: tokenize_format_string("{ -~}")
-    };
-    let total = ac_toks.calculate_total();
-    let result: Vec<String> = ac_toks.take(total).collect();
+    let ac_toks = token_iterator(&tokenize_format_string("{ -~}"));
+    let result: Vec<String> = ac_toks.collect();
     
     assert_eq!(result.len(), 95)
   }
