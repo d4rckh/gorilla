@@ -54,11 +54,17 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
 }
 pub struct TokenIter {
   pub toks: Vec<Token>,
+  repeat_len: usize,
   done: bool
 }
 
 pub fn token_iterator(tokens: &Vec<Token>) -> TokenIter {
-  TokenIter { toks: tokens.clone(), done: false }
+  TokenIter { 
+    toks: tokens.clone(), done: false,
+    repeat_len: tokens.iter()
+      .filter(|e| matches!(e, Token::Repeat(_, _, _)))
+      .count()
+  }
 }
 
 impl Iterator for TokenIter {
@@ -72,9 +78,6 @@ impl Iterator for TokenIter {
     let mut result = String::new();
     let mut inc_next = true;
 
-    let repeat_len = self.toks.iter()
-      .filter(|e| matches!(e, Token::Repeat(_, _, _)))
-      .count();
     let mut current_tok = 1;
     for tok in &mut self.toks {
       match tok {
@@ -85,7 +88,7 @@ impl Iterator for TokenIter {
             if cur == end {
               inc_next = true;
               *cur = *start;
-              if current_tok == repeat_len {
+              if current_tok == self.repeat_len {
                 self.done = true;
                 return Some(result)
               }
@@ -99,7 +102,7 @@ impl Iterator for TokenIter {
       }
     }
 
-    if repeat_len == 0 {
+    if self.repeat_len == 0 {
       self.done = true;
     }
 
