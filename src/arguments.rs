@@ -39,7 +39,7 @@ pub struct ProgramArgs {
   #[clap(
     short='m',
     long="mutation",
-    help="Specify a way to mutate the words. Format is action:param1,param2"
+    help="Specify a way to mutate the words. Format is action:param1:param2"
   )]
   pub mutation_string: Vec<String>,
 
