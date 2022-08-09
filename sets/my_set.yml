@@ -1,0 +1,5 @@
+name: my_set
+
+mutation_sets:
+  - [ "if_contains:admin", "append:1" ]
+  - [ "! if_contains:admin" ]

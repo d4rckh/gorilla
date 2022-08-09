@@ -52,29 +52,24 @@ impl MutationResult {
 }
 
 impl MutationSet {
-  pub fn perform(&self, word: &str) -> MutationResult {
-    let mut result = vec![ word.to_string() ];
+  pub fn perform(&self, mutation_result: &mut MutationResult, word: &str) {
+    let mut result: Vec<String> = vec![ word.to_owned() ];
 
     for mutation in &self.mutations {
       let mut new_result: Vec<String> = vec![ ];
-      for s in result {
-        for s1 in mutation.perform(&s) {
-          new_result.push(s1);
-        }
+      for s in &result {
+        mutation.perform(&mut new_result, s)
       }
       result = new_result    
     }
-  
-    MutationResult {
-      original_word: word.to_owned(),
-      mutated_words: result
-    }
+
+    mutation_result.mutated_words = result
   }
 }
 
 impl Mutation {
-  pub fn perform(&self, input: &str) -> Vec<String> {
-    let mut result: Vec<String> = vec![];
+  pub fn perform(&self, result: &mut Vec<String>, input: &str) {
+    // let mut result: Vec<String> = vec![];
 
     if self.keep_original {
       result.push(input.to_owned());
@@ -123,8 +118,6 @@ impl Mutation {
       Action::Wipe => result.push(String::new()),
       Action::Nothing => result.push(input.to_owned()),
     }
-
-    result
   }
 }
 

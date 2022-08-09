@@ -13,6 +13,7 @@ use std::{
 
 use clap::Parser;
 use colored::Colorize;
+use mutation::MutationResult;
 
 use crate::{
   arguments::ProgramArgs, 
@@ -32,18 +33,22 @@ struct Gorilla {
 
 impl Gorilla {
   fn mutate_word(&mut self, word: String) {
+    
+    let mut mutation_result = MutationResult {
+      original_word: word.clone(),
+      mutated_words: vec![ ]
+    };
+
     self.word_counter += 1;
     
     for mutation_set in &self.mutation_sets {
-      let mut result = mutation_set.perform(&word);
-
-      if self.program_args.keep_original { result.mutated_words.push(word.clone()); } 
+      mutation_set.perform(&mut mutation_result, &word);
 
       if let Some(save_file) = &mut self.file_save {
-        result.save_to_file(save_file)
+        mutation_result.save_to_file(save_file)
       }
 
-      for s in result.mutated_words {
+      for s in &mutation_result.mutated_words {
         if self.file_save.is_none() { 
           println!("{}", s);
         }

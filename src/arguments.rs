@@ -50,13 +50,6 @@ pub struct ProgramArgs {
   )]
   pub mutations_file: Option<String>,
 
-  #[clap(
-    short='k',
-    long="keep-original",
-    help="Keep the original word"
-  )]
-  pub keep_original: bool,
-
   #[clap(subcommand)]
   pub command: Option<Commands>
 }
