@@ -94,12 +94,12 @@ impl Mutation {
       },
       Action::RemoveFirstLetter => {
         let mut chrs = input.chars();
-        chrs.next();
+        for _ in 0..self.times { chrs.next(); }
         result.push(chrs.as_str().to_string())
       },
       Action::RemoveLastLetter => {
         let mut chrs = input.chars();
-        chrs.next_back();
+        for _ in 0..self.times { chrs.next_back(); }
         result.push(chrs.as_str().to_string())
       },
       Action::Reverse => result.push(input.chars().rev().collect()),
