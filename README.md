@@ -3,7 +3,7 @@
 gorilla is the ultimate wordlist tool packing a lot of amazing utilities like:
 - building wordlists based on patterns (like [crunch](https://github.com/jim3ma/crunch))
 - scrap a web page and build a wordlist from its words (like [cewl](https://github.com/digininja/CeWL))
-- extending existing wordlists using advanced rules (like [hashcat](https://hashcat.net/wiki/doku.php?id=rule_based_attack))
+- extending existing wordlists using mutations (like [hashcat's rule based attack](https://hashcat.net/wiki/doku.php?id=rule_based_attack))
 
 ## building
 
