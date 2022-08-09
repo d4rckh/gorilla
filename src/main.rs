@@ -75,6 +75,9 @@ async fn main() -> Result<(), reqwest::Error> {
       }
     )
   } else {
+    if !gorilla.program_args.mutations_file.is_some() {
+      println!("gorilla: (warning) missing mutation sets")
+    }
     gorilla.mutation_sets.push(
       MutationSet {
         mutations: vec![ Mutation {
@@ -93,7 +96,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
   println!("gorilla: mutation sets summary");
   for mutation_set in &gorilla.mutation_sets {
-    print!(" word");
+    print!(" {}", "word".dimmed());
     for mutation in &mutation_set.mutations {
       print!(" -> {}", mutation.to_string().blue());
     }

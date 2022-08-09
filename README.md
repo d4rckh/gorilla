@@ -56,7 +56,7 @@ _administrator9
 
 If we were to supply a wordlist via the `-i` file, we'd get back the amount of words we had in that wordlist times 10.
 
-So far we only applied 1 single set of mutations. Usually you will want to combine multiple of these. This is done via the yaml files. You specify one using the `--mutations-file`/`-f` argument. An example one is located in `sets/simple.yaml` file in this repo and it looks like this:
+So far we only applied 1 single set of mutations. Usually you will want to combine multiple of these. This is done via the yaml files. You specify one using the `--mutations-file`/`-f` argument. An example one is located in `sets/simple.yml` file in this repo and it looks like this:
 
 ```yaml
 name: simple
@@ -90,6 +90,12 @@ administrator99
 4dministr4t0r
 ```
 
+If you'd like to check your mutation file for errors before using it, you can use the following syntax to parse and print the summary.
+
+```
+gorilla --mutations-file muts.yml 
+```
+
 ## scraping web pages for words
 
 (For now) you can only scrap a specific page for words and styles and script tags won't be removed, this wil be implemented in a future release of gorilla. 
@@ -115,7 +121,7 @@ mutation_sets:
   - [ "if_contains:admin" ]
 ```
 
-Another example is the following, which will only add an underscore only to words that are longer than 5 characters
+Another example is the following, which will only add an underscore only to words that are longer than 5 characters.
 
 ```yaml
 name: conditional_mutation
@@ -129,4 +135,4 @@ Notice we had to add another mutation set that begins with the negated version o
 
 ## other mutations
 
-gorilla supports many other mutations and since the tool is in early development it would be very painful to maintain a list of them here. If you are curious about the other mutations, you can check out the `Action` enum from `src/mutation.rs` file
+gorilla supports many other mutations and since the tool is in early development it would be very painful to maintain a list of them here. If you are curious about the other mutations, you can check out the `Action` enum from `src/mutation.rs` file.
