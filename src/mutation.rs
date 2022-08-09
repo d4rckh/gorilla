@@ -1,4 +1,4 @@
-use std::{fmt::{Display, self}, fs, io::Write};
+use std::{fmt::{Display, self}, fs, io::Write, cmp::Ordering};
 
 use crate::formatting::{tokenize_format_string, execute_format_string};
 
@@ -7,6 +7,7 @@ pub enum Action {
   Prepend(String),
   Append(String),
   Replace(String, String),
+  IfCharacterLength(Ordering, usize),
   LowercaseAll,
   UppercaseAll,
   RemoveFirstLetter,
@@ -20,7 +21,8 @@ pub enum Action {
 #[derive(Debug)]
 pub enum MutationBuildError {
   ActionDoesNotExist,
-  MissingArguments
+  MissingArguments,
+  InvalidArgument(String)
 }
 
 pub struct Mutation {
@@ -102,6 +104,11 @@ impl Mutation {
         for _ in 0..self.times { chrs.next_back(); }
         result.push(chrs.as_str().to_string())
       },
+      Action::IfCharacterLength(ord, number) => {
+        if input.len().cmp(number) == *ord {
+          result.push(input.to_owned())
+        }
+      },
       Action::Reverse => result.push(input.chars().rev().collect()),
       Action::UppercaseAll => result.push(input.to_uppercase()),
       Action::LowercaseAll => result.push(input.to_lowercase()),
@@ -125,6 +132,7 @@ impl Display for Mutation {
       Action::Reverse => write!(f, "reverse"),
       Action::RemoveFirstLetter => write!(f, "remove 1st letter"),
       Action::RemoveLastLetter => write!(f, "remove last letter"),
+      Action::IfCharacterLength(ord, number) => write!(f, "if length {:?} {}", ord, number),
       Action::Clone => write!(f, "clone"),
       Action::Wipe => write!(f, "wipe"),
       Action::Nothing => write!(f, "nothing"),
@@ -167,6 +175,27 @@ pub fn build_action(action: &str, arguments: Vec<&str>) -> Result<Action, Mutati
     "replace" => {
       check_action_args!(Action::Replace(arguments[0].to_owned(), arguments[1].to_owned()), 2, argc)
     }, 
+    "if_length" => {
+      check_action_args!({
+        let arg_chrs: Vec<char> = arguments[0].chars().collect();
+        let first_chr = arg_chrs.first().unwrap();
+        
+        let ordering = match first_chr {
+          '>' => Ordering::Greater,
+          '<' => Ordering::Less,
+          '=' => Ordering::Equal,
+          _ => {
+            return Err(MutationBuildError::InvalidArgument(String::from("missing operator")))
+          }
+        };
+
+        let mut number_chrs = arguments[0].chars();
+        number_chrs.next();
+        let number: usize = number_chrs.as_str().parse().unwrap();
+
+        Action::IfCharacterLength(ordering, number)
+      }, 1, argc)
+    },
     "reverse" => Ok(Action::Reverse), 
     "clone" => Ok(Action::Clone), 
     "wipe" => Ok(Action::Wipe), 

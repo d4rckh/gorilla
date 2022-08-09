@@ -10,7 +10,7 @@ use clap::{Parser, Subcommand};
 pub struct ProgramArgs {
   #[clap (
     short='i',
-    long="input",
+    long="from-file",
     help="Specify the input file"
   )]
   pub file_input: Option<String>,
@@ -21,6 +21,13 @@ pub struct ProgramArgs {
     help="Generate words from a pattern"
   )]
   pub pattern_input: Option<String>,
+
+  #[clap (
+    short='w',
+    long="from-website",
+    help="Spider a website and generate a wordlist from it's page contents"
+  )]
+  pub website_input: Option<String>,
 
   #[clap(
       short='o', 

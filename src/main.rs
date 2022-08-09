@@ -2,20 +2,24 @@ mod arguments;
 mod mutation;
 mod formatting;
 mod yaml_parser;
+mod website_scraper;
+
 mod tests;
 
 use std::{
   fs::{File, self, OpenOptions}, 
-  io::{ BufReader, BufRead }
+  io::{BufReader, BufRead}
 };
 
 use clap::Parser;
 use colored::Colorize;
-use mutation::MutationSet;
 
 use crate::{
-  arguments::{ProgramArgs}, 
-  mutation::{ parse_mutation_string }, yaml_parser::get_mutation_sets, formatting::{tokenize_format_string, execute_format_string}
+  arguments::ProgramArgs, 
+  mutation::{parse_mutation_string, MutationSet}, 
+  yaml_parser::get_mutation_sets, 
+  formatting::{tokenize_format_string, execute_format_string},
+  website_scraper::{download_page, extract_words}
 };
 
 struct Gorilla {
@@ -49,7 +53,8 @@ impl Gorilla {
   }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), reqwest::Error> {
 
   let mut gorilla = Gorilla {
     program_args: ProgramArgs::parse(),
@@ -59,7 +64,7 @@ fn main() {
     word_counter: 0
   };
   
-  if gorilla.program_args.mutation_string.len() > 1 {
+  if gorilla.program_args.mutation_string.len() > 0 {
     gorilla.mutation_sets.push(
       MutationSet {
         mutations: parse_mutation_string(&gorilla.program_args.mutation_string) 
@@ -113,10 +118,21 @@ fn main() {
     }
   }
 
+  if let Some(website) = &gorilla.program_args.website_input {
+    println!("gorilla: scraping words from a website {}", website.purple());
+    let page_contents = download_page(website).await?;
+    let words = extract_words(&page_contents);
+
+    for word in words {
+      gorilla.mutate_word(word)
+    }
+  }
+
   println!("gorilla: {}. {} words -> {} words", 
     "finished".green().bold(),
     gorilla.word_counter.to_string().red(), 
     gorilla.mutation_counter.to_string().green()
-  )
+  );
 
+  Ok(())
 }
