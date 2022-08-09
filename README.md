@@ -23,7 +23,7 @@ gorilla --from-pattern "{a-z}{a-z}{a-z}{a-z}{a-z}"
 
 Other examples of patterns are `administrator{0-9}` (`administrator0` -> `administrator9`); `hello_world{a-z}{0-9}` (`hello_worlda0` -> `hello_worldz9`).
 
-If you want to save the output to a file, you can use the `-output-file`/`-o` argument.
+If you want to save the output to a file, you can use the `--output-file`/`-o` argument.
 
 ## modifying existing wordlists using mutations/rules
 
@@ -121,7 +121,7 @@ mutation_sets:
   - [ "if_contains:admin" ]
 ```
 
-Another example is the following, which will only add an underscore only to words that are longer than 5 characters.
+Another example is the following, which will add an underscore only to words that are longer than 5 characters.
 
 ```yaml
 name: conditional_mutation
