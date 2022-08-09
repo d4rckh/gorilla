@@ -17,7 +17,7 @@ use mutation::MutationResult;
 
 use crate::{
   arguments::ProgramArgs, 
-  mutation::{parse_mutation_string, MutationSet}, 
+  mutation::{parse_mutation_string, MutationSet, Mutation, Action}, 
   yaml_parser::get_mutation_sets, 
   formatting::{tokenize_format_string, token_iterator},
   website_scraper::{download_page, extract_words}
@@ -74,6 +74,16 @@ async fn main() -> Result<(), reqwest::Error> {
         mutations: parse_mutation_string(&gorilla.program_args.mutation_string) 
       }
     )
+  } else {
+    gorilla.mutation_sets.push(
+      MutationSet {
+        mutations: vec![ Mutation {
+          action: Action::Nothing,
+          times: 1,
+          keep_original: false
+        } ]
+      }
+    )
   }
 
   if let Some(mutations_file) = &gorilla.program_args.mutations_file { 
@@ -117,8 +127,13 @@ async fn main() -> Result<(), reqwest::Error> {
     let tokens = tokenize_format_string(pattern_input);
     let ac_toks = token_iterator(&tokens);
     let total_words = ac_toks.calculate_total();
-    
+    let total_size = ac_toks.calculate_size();
+    let mb_size = total_size/1048576;
+    let gb_size = total_size/1073741824;
+    let tb_size = total_size/1099511627776;
+
     println!("gorilla: will generate {} words from a pattern {}", total_words, pattern_input.purple());
+    println!("         sizes before mutations: {total_size} bytes / {mb_size} MB / {gb_size} GB / {tb_size} TB");
 
     for word in ac_toks {
       gorilla.mutate_word(word);

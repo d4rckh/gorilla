@@ -31,7 +31,7 @@ pub struct ProgramArgs {
 
   #[clap(
       short='o', 
-      long="output", 
+      long="output-file", 
       help="Specify the file in which the results will be saved"
   )]
   pub file_save: Option<String>,

@@ -52,7 +52,6 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
 
   result
 }
-
 pub struct TokenIter {
   pub toks: Vec<Token>,
   done: bool
@@ -96,9 +95,12 @@ impl Iterator for TokenIter {
             }
           } 
           current_tok += 1;
-
         }
       }
+    }
+
+    if repeat_len == 0 {
+      self.done = true;
     }
 
     Some(result)
@@ -117,6 +119,21 @@ impl TokenIter {
     }
 
     result
+  }
+
+  pub fn calculate_size(&self) -> u128 {
+    let mut sample_str = String::new();
+
+    for tok in &self.toks {
+      match tok {
+        Token::String(s) => sample_str.push_str(s),
+        Token::Repeat(start, _, _) => sample_str.push(char::from_u32(*start).unwrap())
+      }
+    }
+
+    sample_str.push_str("\n"); // written on disk with a new line so we add a new line
+
+    sample_str.len() as u128 * self.calculate_total()
   }
 }
 
