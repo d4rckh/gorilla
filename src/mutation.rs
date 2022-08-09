@@ -9,6 +9,8 @@ pub enum Action {
   Replace(String, String),
   LowercaseAll,
   UppercaseAll,
+  RemoveFirstLetter,
+  RemoveLastLetter,
   Clone,
   Reverse,
   Wipe,
@@ -90,6 +92,16 @@ impl Mutation {
       Action::Replace(s, b) => {
         if input.contains(s) || !self.keep_original { result.push(input.replace(s, b)) }
       },
+      Action::RemoveFirstLetter => {
+        let mut chrs = input.chars();
+        chrs.next();
+        result.push(chrs.as_str().to_string())
+      },
+      Action::RemoveLastLetter => {
+        let mut chrs = input.chars();
+        chrs.next_back();
+        result.push(chrs.as_str().to_string())
+      },
       Action::Reverse => result.push(input.chars().rev().collect()),
       Action::UppercaseAll => result.push(input.to_uppercase()),
       Action::LowercaseAll => result.push(input.to_lowercase()),
@@ -111,6 +123,8 @@ impl Display for Mutation {
       Action::Append(s) => write!(f, "append: {}", s),
       Action::Replace(s, b) => write!(f, "replace: {} -> {}", s, b),
       Action::Reverse => write!(f, "reverse"),
+      Action::RemoveFirstLetter => write!(f, "remove 1st letter"),
+      Action::RemoveLastLetter => write!(f, "remove last letter"),
       Action::Clone => write!(f, "clone"),
       Action::Wipe => write!(f, "wipe"),
       Action::Nothing => write!(f, "nothing"),
@@ -159,6 +173,8 @@ pub fn build_action(action: &str, arguments: Vec<&str>) -> Result<Action, Mutati
     "nothing" => Ok(Action::Nothing), 
     "uppercase_all" => Ok(Action::UppercaseAll), 
     "lowercase_all" => Ok(Action::LowercaseAll), 
+    "remove_last_letter" => Ok(Action::RemoveLastLetter), 
+    "remove_first_letter" => Ok(Action::RemoveFirstLetter), 
     _ => Err(MutationBuildError::ActionDoesNotExist),
   }
 }
