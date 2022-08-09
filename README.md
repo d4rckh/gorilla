@@ -38,8 +38,8 @@ Usually you will want to use the `--from-file`/`-i` argument instead of `--from-
 The above command takes in 1 word and outputs 1 word: `_administrator`. You can add multiple mutations using the same parameter.
 
 ```
-gorilla --from-pattern "administrator" 
-  -m "prepend:_" 
+gorilla --from-pattern "administrator" \
+  -m "prepend:_" \
   -m "append:{0-9}"
 ```
 
