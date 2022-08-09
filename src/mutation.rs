@@ -7,7 +7,6 @@ pub enum Action {
   Prepend(String),
   Append(String),
   Replace(String, String),
-  IfCharacterLength(Ordering, usize),
   LowercaseAll,
   UppercaseAll,
   RemoveFirstLetter,
@@ -15,7 +14,10 @@ pub enum Action {
   Clone,
   Reverse,
   Wipe,
-  Nothing
+  Nothing,
+
+  IfCharacterLength(bool, Ordering, usize),
+  IfContains(bool, String)
 }
 
 #[derive(Debug)]
@@ -104,8 +106,13 @@ impl Mutation {
         for _ in 0..self.times { chrs.next_back(); }
         result.push(chrs.as_str().to_string())
       },
-      Action::IfCharacterLength(ord, number) => {
-        if input.len().cmp(number) == *ord {
+      Action::IfCharacterLength(not, ord, number) => {
+        if (input.len().cmp(number) == *ord) != *not {
+          result.push(input.to_owned())
+        }
+      },
+      Action::IfContains(not, string) => {
+        if input.contains(string) != *not {
           result.push(input.to_owned())
         }
       },
@@ -132,12 +139,15 @@ impl Display for Mutation {
       Action::Reverse => write!(f, "reverse"),
       Action::RemoveFirstLetter => write!(f, "remove 1st letter"),
       Action::RemoveLastLetter => write!(f, "remove last letter"),
-      Action::IfCharacterLength(ord, number) => write!(f, "if length {:?} {}", ord, number),
       Action::Clone => write!(f, "clone"),
       Action::Wipe => write!(f, "wipe"),
       Action::Nothing => write!(f, "nothing"),
       Action::UppercaseAll => write!(f, "uppercase all"),
       Action::LowercaseAll => write!(f, "lowercase all"),
+
+      Action::IfCharacterLength(not, ord, number) => write!(f, "if length {:?} {} = {}", ord, number, !not),
+      Action::IfContains(not, string) => write!(f, "if contains {} = {}", string, !not)
+
     }?;
 
     if self.keep_original {
@@ -162,7 +172,7 @@ macro_rules! check_action_args {
   };
 }
 
-pub fn build_action(action: &str, arguments: Vec<&str>) -> Result<Action, MutationBuildError> {
+pub fn build_action(action: &str, arguments: Vec<&str>, options: &str) -> Result<Action, MutationBuildError> {
   let argc = arguments.len();
 
   match action {
@@ -193,8 +203,11 @@ pub fn build_action(action: &str, arguments: Vec<&str>) -> Result<Action, Mutati
         number_chrs.next();
         let number: usize = number_chrs.as_str().parse().unwrap();
 
-        Action::IfCharacterLength(ordering, number)
+        Action::IfCharacterLength(options.contains("!"), ordering, number)
       }, 1, argc)
+    },
+    "if_contains" => {
+      check_action_args!(Action::IfContains(options.contains("!"), arguments[0].to_owned()), 1, argc)
     },
     "reverse" => Ok(Action::Reverse), 
     "clone" => Ok(Action::Clone), 
@@ -241,7 +254,7 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
 
     mutation_split.remove(0);
 
-    match build_action(mutation_action, mutation_split) {
+    match build_action(mutation_action, mutation_split, mutation_options) {
       Ok(m) => {
         mutations.push(Mutation { action: m, times: mutation_runtimes, keep_original: mutation_options.contains("k") })
       },

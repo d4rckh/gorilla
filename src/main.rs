@@ -55,7 +55,6 @@ impl Gorilla {
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
-
   let mut gorilla = Gorilla {
     program_args: ProgramArgs::parse(),
     mutation_sets: vec![ ],
@@ -110,6 +109,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
   if let Some(pattern_input) = &gorilla.program_args.pattern_input {
     println!("gorilla: generating words from a pattern {}", pattern_input.purple());
+    
     let tokens = tokenize_format_string(pattern_input);
     let result = execute_format_string(&tokens);
     
@@ -120,6 +120,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
   if let Some(website) = &gorilla.program_args.website_input {
     println!("gorilla: scraping words from a website {}", website.purple());
+    
     let page_contents = download_page(website).await?;
     let words = extract_words(&page_contents);
 
