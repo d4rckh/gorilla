@@ -126,17 +126,17 @@ async fn main() -> Result<(), reqwest::Error> {
   }
 
   if let Some(pattern_input) = &gorilla.program_args.pattern_input {
-    
     let tokens = tokenize_format_string(pattern_input);
     let ac_toks = token_iterator(&tokens);
+    
     let total_words = ac_toks.calculate_total();
-    let total_size = ac_toks.calculate_size();
-    let mb_size = total_size/1048576;
-    let gb_size = total_size/1073741824;
-    let tb_size = total_size/1099511627776;
+    let b_size = ac_toks.calculate_size();
+    let mb_size = b_size/1048576;
+    let gb_size = b_size/1073741824;
+    let tb_size = b_size/1099511627776;
 
     println!("gorilla: will generate {} words from a pattern {}", total_words, pattern_input.purple());
-    println!("         sizes before mutations: {total_size} bytes / {mb_size} MB / {gb_size} GB / {tb_size} TB");
+    println!("         sizes before mutations: {b_size} bytes / {mb_size} MB / {gb_size} GB / {tb_size} TB");
 
     for word in ac_toks {
       gorilla.mutate_word(word);
