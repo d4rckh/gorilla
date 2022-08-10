@@ -25,6 +25,9 @@ Other examples of patterns are `administrator{0-9}` (`administrator0` -> `admini
 
 If you want to save the output to a file, you can use the `--output-file`/`-o` argument.
 
+![image](https://user-images.githubusercontent.com/35298550/183973643-3191f7a0-7dda-4e4f-8f10-eaaa4d748874.png)
+
+
 ## modifying existing wordlists using mutations/rules
 
 Using the command line arguments you can do any mutation that is supported but you are only limited to only 1 set of mutations. A mutation set is a set of mutations applied to a word. Via the cli, mutations are supplied via the `--mutation`/`-m` argument.
@@ -32,6 +35,8 @@ Using the command line arguments you can do any mutation that is supported but y
 ```
 gorilla --from-pattern "administrator" --mutation "prepend:_"
 ```
+
+![image](https://user-images.githubusercontent.com/35298550/183973759-63dcc1c7-c32b-49b4-be68-838d99535f5a.png)
 
 Usually you will want to use the `--from-file`/`-i` argument instead of `--from-pattern` in this case to specify a wordlist instead of a single word, but to keep things simple, I will use that. 
 
@@ -72,7 +77,9 @@ mutation_sets:
   - [ "replace:o:0", "replace:a:4", "replace:e:3" ] # => w0rd, h3ll0
 ```
 
-Each mutations file has to have a `name` and a `mutation_sets` value as shown in the example. The above mutation sets will generate, from a single word, 27 other words:
+![image](https://user-images.githubusercontent.com/35298550/183971400-d3bc2a5d-8620-4163-aa99-f34113dcbbf7.png)
+
+Each mutations file has to have a `name` and a `mutation_sets` value as shown in the example. The above mutation sets will generate, from a single word, 27 other words.
 
 ```
 administrator
@@ -105,6 +112,8 @@ You can specify a page using the `--from-website`/`-w` argument. For example
 ```
 gorilla --from-website https://example.org/
 ```
+
+![image](https://user-images.githubusercontent.com/35298550/183974047-68fb86d4-a8a7-4b1e-9e27-0cf512c95988.png)
 
 The above command will print every word from that website. You can add other arguments shown previously like `--mutations-file`/`-f`, `--mutation`/`-m` and of course `--output-file`/`-o` to save them (instead of printing).
 
