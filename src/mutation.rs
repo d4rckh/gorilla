@@ -5,17 +5,22 @@ use crate::formatting::{tokenize_format_string, token_iterator};
 #[derive(Debug)]
 pub enum Action {
   Prepend(String),
-  Append(String),
+  Append(String), 
   Replace(String, String),
   LowercaseAll,
   UppercaseAll,
   RemoveFirstLetter,
   RemoveLastLetter,
-  Clone,
   Reverse,
+  
+  // more debugging related
+  Clone,
   Wipe,
+  Remove,
   Nothing,
 
+  // conditional, same effect as wipe if conditions are not met
+  // bool indicates if the condition should be negated
   IfCharacterLength(bool, Ordering, usize),
   IfContains(bool, String)
 }
@@ -69,8 +74,6 @@ impl MutationSet {
 
 impl Mutation {
   pub fn perform(&self, result: &mut Vec<String>, input: &str) {
-    // let mut result: Vec<String> = vec![];
-
     if self.keep_original {
       result.push(input.to_owned());
     }
@@ -115,6 +118,7 @@ impl Mutation {
       Action::Clone => result.append(&mut vec![input.to_owned(), input.to_owned()]),
       Action::Wipe => result.push(String::new()),
       Action::Nothing => result.push(input.to_owned()),
+      Action::Remove => (),
     }
   }
 }
@@ -135,10 +139,10 @@ impl Display for Mutation {
       Action::Nothing => write!(f, "nothing"),
       Action::UppercaseAll => write!(f, "uppercase all"),
       Action::LowercaseAll => write!(f, "lowercase all"),
+      Action::Remove => write!(f, "remove"),
 
       Action::IfCharacterLength(not, ord, number) => write!(f, "if length {:?} {} = {}", ord, number, !not),
       Action::IfContains(not, string) => write!(f, "if contains {} = {}", string, !not)
-
     }?;
 
     if self.keep_original {
@@ -208,6 +212,7 @@ pub fn build_action(action: &str, arguments: Vec<&str>, options: &str) -> Result
     "lowercase_all" => Ok(Action::LowercaseAll), 
     "remove_last_letter" => Ok(Action::RemoveLastLetter), 
     "remove_first_letter" => Ok(Action::RemoveFirstLetter), 
+    "remove" => Ok(Action::Remove), 
     _ => Err(MutationBuildError::ActionDoesNotExist),
   }
 }

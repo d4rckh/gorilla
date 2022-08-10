@@ -17,7 +17,7 @@ use mutation::MutationResult;
 
 use crate::{
   arguments::ProgramArgs, 
-  mutation::{parse_mutation_string, MutationSet, Mutation, Action}, 
+  mutation::{parse_mutation_string, MutationSet}, 
   yaml_parser::get_mutation_sets, 
   formatting::{tokenize_format_string, token_iterator},
   website_scraper::{download_page, extract_words}
@@ -33,7 +33,6 @@ struct Gorilla {
 
 impl Gorilla {
   fn mutate_word(&mut self, word: String) {
-    
     let mut mutation_result = MutationResult {
       original_word: word.clone(),
       mutated_words: vec![ ]
@@ -73,19 +72,6 @@ fn main() {
         mutations: parse_mutation_string(&gorilla.program_args.mutation_string) 
       }
     )
-  } else {
-    if !gorilla.program_args.mutations_file.is_some() {
-      println!("gorilla: (warning) missing mutation sets")
-    }
-    gorilla.mutation_sets.push(
-      MutationSet {
-        mutations: vec![ Mutation {
-          action: Action::Nothing,
-          times: 1,
-          keep_original: false
-        } ]
-      }
-    )
   }
 
   if let Some(mutations_file) = &gorilla.program_args.mutations_file { 
@@ -93,13 +79,18 @@ fn main() {
     gorilla.mutation_sets.append(&mut get_mutation_sets(yaml_input))
   }
 
-  println!("gorilla: mutation sets summary");
-  for mutation_set in &gorilla.mutation_sets {
-    print!(" {}", "word".dimmed());
-    for mutation in &mutation_set.mutations {
-      print!(" -> {}", mutation.to_string().blue());
+  if gorilla.mutation_sets.len() < 1 {
+    println!("gorilla: (warning) missing mutation sets, consider adding '-m nothing'");
+    println!("         to generate output")
+  } else {
+    println!("gorilla: mutation sets summary");
+    for mutation_set in &gorilla.mutation_sets {
+      print!(" {}", "word".dimmed());
+      for mutation in &mutation_set.mutations {
+        print!(" -> {}", mutation.to_string().blue());
+      }
+      println!()
     }
-    println!()
   }
 
   if let Some(file_save) = &gorilla.program_args.file_save {

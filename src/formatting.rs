@@ -84,20 +84,24 @@ impl Iterator for TokenIter {
         Token::String(s) => result.push_str(s),
         Token::Repeat(start, end, cur) => {
           result.push(char::from_u32(*cur).unwrap());          
-          if inc_next {
-            if cur == end {
-              inc_next = true;
-              *cur = *start;
-              if current_tok == self.repeat_len {
-                self.done = true;
-                return Some(result)
-              }
-            } else {
-              inc_next = false;
-              *cur += 1
-            }
-          } 
-          current_tok += 1;
+        
+          if !inc_next { continue }
+
+          if cur != end {
+            inc_next = false;
+            *cur += 1;
+            continue
+          }
+          
+          inc_next = true;
+          *cur = *start;
+
+          if current_tok == self.repeat_len {
+            self.done = true;
+            return Some(result)
+          }
+
+          current_tok += 1;        
         }
       }
     }

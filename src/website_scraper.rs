@@ -2,7 +2,6 @@ use regex::Regex;
 
 pub fn download_page(page_url: &str) -> Result<String, ureq::Error> {
   let body: String = ureq::get(page_url)
-    .set("Example-Header", "header value")
     .call()?
     .into_string()?;
 
@@ -32,9 +31,8 @@ pub fn extract_words(page_body: &str) -> Vec<String> {
     if !trimmed_line.is_empty() {
       for word in trimmed_line.split(" ").collect::<Vec<&str>>() {
         let w = word.trim().to_owned();
-        if !words.contains(&w) {
-          words.push(w)
-        } 
+        if words.contains(&w) { continue } 
+        words.push(w)
       }
     }
   }
