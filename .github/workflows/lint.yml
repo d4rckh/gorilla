@@ -23,4 +23,4 @@ jobs:
           VALIDATE_GITHUB_ACTIONS: true
           VALIDATE_GITLEAKS: true
           VALIDATE_YAML: true
-          VALIDATE_RUST: true
+          VALIDATE_RUST_CLIPPY: true
