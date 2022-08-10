@@ -9,8 +9,9 @@ edition = "2021"
 clap = { version = "3.2.16", features = ["derive"] }
 colored = "2.0.0"
 regex = "1.6.0"
-reqwest = "0.11.11"
-tokio = { version = "1.20.1", features = ["full"] }
+ureq = "2.5.0"
+# reqwest = "0.11.11"
+# tokio = { version = "1.20.1", features = ["full"] }
 yaml-rust = "0.4.5"
 
 [profile.release]

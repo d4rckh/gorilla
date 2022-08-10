@@ -58,8 +58,7 @@ impl Gorilla {
   }
 }
 
-#[tokio::main]
-async fn main() -> Result<(), reqwest::Error> {
+fn main() {
   let mut gorilla = Gorilla {
     program_args: ProgramArgs::parse(),
     mutation_sets: vec![ ],
@@ -108,7 +107,7 @@ async fn main() -> Result<(), reqwest::Error> {
     gorilla.file_save = Some(OpenOptions::new()
       .append(true)
       .open(&file_save)
-      .expect("Could not open file")
+      .expect("Could not output file")
     )
   }
 
@@ -146,7 +145,7 @@ async fn main() -> Result<(), reqwest::Error> {
   if let Some(website) = &gorilla.program_args.website_input {
     println!("gorilla: scraping words from a website {}", website.purple());
     
-    let page_contents = download_page(website).await?;
+    let page_contents = download_page(website).unwrap();
     let words = extract_words(&page_contents);
 
     for word in words {
@@ -159,6 +158,4 @@ async fn main() -> Result<(), reqwest::Error> {
     gorilla.word_counter.to_string().red(), 
     gorilla.mutation_counter.to_string().green()
   );
-
-  Ok(())
 }

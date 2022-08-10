@@ -1,9 +1,10 @@
 use regex::Regex;
-use reqwest;
 
-pub async fn download_page(page_url: &str) -> Result<String, reqwest::Error> {
-  let res = reqwest::get(page_url).await?;
-  let body = res.text().await?;
+pub fn download_page(page_url: &str) -> Result<String, ureq::Error> {
+  let body: String = ureq::get(page_url)
+    .set("Example-Header", "header value")
+    .call()?
+    .into_string()?;
 
   Ok(body)
 }
