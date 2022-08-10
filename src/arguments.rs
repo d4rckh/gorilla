@@ -16,6 +16,20 @@ pub struct ProgramArgs {
   pub file_input: Option<String>,
 
   #[clap (
+    short='l',
+    long="one-line",
+    help="Print the output on one line"
+  )]
+  pub one_line: bool,
+
+  #[clap (
+    short='t',
+    long="timer",
+    help="Show the amount of time it took to mutate/compute a word"
+  )]
+  pub timer: bool,
+
+  #[clap (
     short='p',
     long="from-pattern",
     help="Generate words from a pattern"

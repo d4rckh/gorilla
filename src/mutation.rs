@@ -260,3 +260,12 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
 
   mutations
 }
+
+pub fn empty_mutation_set() -> MutationSet {
+  let mutation = Mutation {
+    action: Action::Nothing,
+    times: 1,
+    keep_original: false
+  };
+  MutationSet { mutations: vec![ mutation ] }
+}

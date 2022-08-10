@@ -8,7 +8,7 @@ mod tests;
 
 use std::{
   fs::{File, self, OpenOptions}, 
-  io::{BufReader, BufRead}
+  io::{BufReader, BufRead}, time::SystemTime
 };
 
 use clap::Parser;
@@ -17,7 +17,7 @@ use mutation::MutationResult;
 
 use crate::{
   arguments::ProgramArgs, 
-  mutation::{parse_mutation_string, MutationSet}, 
+  mutation::{parse_mutation_string, empty_mutation_set, MutationSet}, 
   yaml_parser::get_mutation_sets, 
   formatting::{tokenize_format_string, token_iterator},
   website_scraper::{download_page, extract_words}
@@ -28,7 +28,8 @@ struct Gorilla {
   mutation_sets: Vec<MutationSet>,
   file_save: Option<File>,
   mutation_counter: u32,
-  word_counter: u32
+  word_counter: u32,
+  start_time: SystemTime
 }
 
 impl Gorilla {
@@ -49,7 +50,14 @@ impl Gorilla {
 
       for s in &mutation_result.mutated_words {
         if self.file_save.is_none() { 
-          println!("{}", s);
+          if self.program_args.timer { print!("(in {:?}) ", 
+              SystemTime::now()
+                .duration_since(self.start_time)
+                .unwrap()
+            ) 
+          }
+          if self.program_args.one_line { print!("{} ", s) }
+          else { println!("{}", s) }
         }
         self.mutation_counter += 1
       }
@@ -63,7 +71,8 @@ fn main() {
     mutation_sets: vec![ ],
     file_save: None,
     mutation_counter: 0,
-    word_counter: 0
+    word_counter: 0,
+    start_time: SystemTime::now()
   };
   
   if gorilla.program_args.mutation_string.len() > 0 {
@@ -80,8 +89,8 @@ fn main() {
   }
 
   if gorilla.mutation_sets.len() < 1 {
-    println!("gorilla: (warning) missing mutation sets, consider adding '-m nothing'");
-    println!("         to generate output")
+    println!("gorilla: (warning) missing mutation sets");
+    gorilla.mutation_sets.push(empty_mutation_set())
   } else {
     println!("gorilla: mutation sets summary");
     for mutation_set in &gorilla.mutation_sets {
@@ -144,7 +153,14 @@ fn main() {
     }
   }
 
-  println!("gorilla: {}. {} words -> {} words", 
+  if gorilla.program_args.one_line { println!() }
+  
+  let end_time = SystemTime::now();
+
+  let runtime_dur = end_time.duration_since(gorilla.start_time)
+    .expect("Clock may have gone backwards");
+
+  println!("gorilla: {} in {runtime_dur:?}. {} words -> {} words", 
     "finished".green().bold(),
     gorilla.word_counter.to_string().red(), 
     gorilla.mutation_counter.to_string().green()
