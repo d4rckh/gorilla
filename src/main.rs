@@ -75,7 +75,7 @@ fn main() {
     start_time: SystemTime::now()
   };
   
-  if gorilla.program_args.mutation_string.len() > 0 {
+  if !gorilla.program_args.mutation_string.is_empty() {
     gorilla.mutation_sets.push(
       MutationSet {
         mutations: parse_mutation_string(&gorilla.program_args.mutation_string) 
@@ -88,7 +88,7 @@ fn main() {
     gorilla.mutation_sets.append(&mut get_mutation_sets(yaml_input))
   }
 
-  if gorilla.mutation_sets.len() < 1 {
+  if gorilla.mutation_sets.is_empty() {
     println!("gorilla: (warning) missing mutation sets");
     gorilla.mutation_sets.push(empty_mutation_set())
   } else {

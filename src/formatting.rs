@@ -30,7 +30,7 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
       cur.clear();
     } else if character == '}' {
       inside_repeat = !inside_repeat;
-      let ch_start = cur.chars().nth(0).unwrap();
+      let ch_start = cur.chars().next().unwrap();
       let ch_end = cur.chars().nth(2).unwrap();
       result.push(
         Token::Repeat(
@@ -58,9 +58,9 @@ pub struct TokenIter {
   done: bool
 }
 
-pub fn token_iterator(tokens: &Vec<Token>) -> TokenIter {
+pub fn token_iterator(tokens: &[Token]) -> TokenIter {
   TokenIter { 
-    toks: tokens.clone(), done: false,
+    toks: tokens.to_owned(), done: false,
     repeat_len: tokens.iter()
       .filter(|e| matches!(e, Token::Repeat(_, _, _)))
       .count()
@@ -138,7 +138,7 @@ impl TokenIter {
       }
     }
 
-    sample_str.push_str("\n"); // written on disk with a new line so we add a new line
+    sample_str.push('\n'); // written on disk with a new line so we add a new line
 
     sample_str.len() as u128 * self.calculate_total()
   }

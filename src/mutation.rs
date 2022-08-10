@@ -198,11 +198,11 @@ pub fn build_action(action: &str, arguments: Vec<&str>, options: &str) -> Result
         number_chrs.next();
         let number: usize = number_chrs.as_str().parse().unwrap();
 
-        Action::IfCharacterLength(options.contains("!"), ordering, number)
+        Action::IfCharacterLength(options.contains('!'), ordering, number)
       }, 1, argc)
     },
     "if_contains" => {
-      check_action_args!(Action::IfContains(options.contains("!"), arguments[0].to_owned()), 1, argc)
+      check_action_args!(Action::IfContains(options.contains('!'), arguments[0].to_owned()), 1, argc)
     },
     "reverse" => Ok(Action::Reverse), 
     "clone" => Ok(Action::Clone), 
@@ -222,7 +222,7 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
 
   for mutation_string in mutation_strings {
     let mut mutation_split: Vec<&str> = mutation_string
-      .split(":")
+      .split(':')
       .into_iter()
       .map(|x| x.trim())
       .collect();
@@ -230,9 +230,9 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
     let mut mutation_runtimes: usize = 1;
     let mut mutation_options: &str = "";
     
-    if mutation_action.contains(" ") {
+    if mutation_action.contains(' ') {
       let mutation_action_split: Vec<&str> = mutation_action
-        .split(" ")
+        .split(' ')
         .collect();
       if mutation_action_split.len() > 1 {
         mutation_action = mutation_action_split.last().unwrap();
@@ -252,7 +252,7 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
 
     match build_action(mutation_action, mutation_split, mutation_options) {
       Ok(m) => {
-        mutations.push(Mutation { action: m, times: mutation_runtimes, keep_original: mutation_options.contains("k") })
+        mutations.push(Mutation { action: m, times: mutation_runtimes, keep_original: mutation_options.contains('k') })
       },
       Err(e) => println!("warning: couldn't build mutation {} ({:?})", mutation_action, e)
     }
