@@ -22,7 +22,7 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
   let mut cur = String::new();
 
   for character in input.chars() {
-    if character == '{' {
+    if character == '{' && !inside_repeat {
       inside_repeat = !inside_repeat;
       result.push(
         Token::String(cur.clone())

@@ -8,4 +8,4 @@ mutation_sets:
   - [ uppercase_all ] # => WORD
   - [ "append:{0-9}" ] # => word1, word2, word3
   - [ "2 append:{0-9}" ] # => word11, word22, word33
-  - [ "replace:o:0", "replace:a:4", "replace:e:3" ] # => w0rd, h3ll0
+  - [ "replace:o:0", "replace:a:4", "replace:e:3", "replace:i:1" ] # => w0rd, h3ll0

@@ -1,0 +1,7 @@
+name: emails
+
+mutation_sets: 
+  - [ "append:@yahoo.com" ]
+  - [ "append:@gmail.com" ]
+  - [ "append:@outlook.com" ]
+  - [ "append:@hotmail.com" ]
