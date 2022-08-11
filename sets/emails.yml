@@ -5,3 +5,4 @@ mutation_sets:
   - [ "append:@gmail.com" ]
   - [ "append:@outlook.com" ]
   - [ "append:@hotmail.com" ]
+  - [ "append:@protonmail.com" ]
