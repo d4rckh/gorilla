@@ -29,7 +29,8 @@ struct Gorilla {
   file_save: Option<File>,
   mutation_counter: u32,
   word_counter: u32,
-  start_time: SystemTime
+  start_time: SystemTime,
+  output_separator: String
 }
 
 impl Gorilla {
@@ -51,13 +52,12 @@ impl Gorilla {
       for s in &mutation_result.mutated_words {
         if self.file_save.is_none() { 
           if self.program_args.timer { print!("(in {:?}) ", 
-              SystemTime::now()
-                .duration_since(self.start_time)
-                .unwrap()
+            SystemTime::now()
+              .duration_since(self.start_time)
+              .unwrap()
             ) 
           }
-          if self.program_args.one_line { print!("{} ", s) }
-          else { println!("{}", s) }
+          print!("{s}{}", self.output_separator)
         }
         self.mutation_counter += 1
       }
@@ -72,8 +72,11 @@ fn main() {
     file_save: None,
     mutation_counter: 0,
     word_counter: 0,
-    start_time: SystemTime::now()
+    start_time: SystemTime::now(),
+    output_separator: String::from('\n')
   };
+
+  if gorilla.program_args.one_line { gorilla.output_separator = String::from(' ') }
   
   if !gorilla.program_args.mutation_string.is_empty() {
     gorilla.mutation_sets.push(
