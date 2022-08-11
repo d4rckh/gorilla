@@ -70,6 +70,15 @@ impl MutationSet {
 
     mutation_result.mutated_words = result
   }
+
+  pub fn empty_set() -> MutationSet {
+    let mutation = Mutation {
+      action: Action::Nothing,
+      times: 1,
+      keep_original: false
+    };
+    MutationSet { mutations: vec![ mutation ] }
+  }
 }
 
 impl Mutation {
@@ -167,54 +176,56 @@ macro_rules! check_action_args {
   };
 }
 
-pub fn build_action(action: &str, arguments: Vec<&str>, options: &str) -> Result<Action, MutationBuildError> {
-  let argc = arguments.len();
-
-  match action {
-    "prepend" => {
-      check_action_args!(Action::Prepend(arguments[0].to_owned()), 1, argc)
-    },
-    "append" => {
-      check_action_args!(Action::Append(arguments[0].to_owned()), 1, argc)
-    },
-    "replace" => {
-      check_action_args!(Action::Replace(arguments[0].to_owned(), arguments[1].to_owned()), 2, argc)
-    }, 
-    "if_length" => {
-      check_action_args!({
-        let arg_chrs: Vec<char> = arguments[0].chars().collect();
-        let first_chr = arg_chrs.first().unwrap();
-        
-        let ordering = match first_chr {
-          '>' => Ordering::Greater,
-          '<' => Ordering::Less,
-          '=' => Ordering::Equal,
-          _ => {
-            return Err(MutationBuildError::InvalidArgument(String::from("missing operator")))
-          }
-        };
-
-        let mut number_chrs = arguments[0].chars();
-        number_chrs.next();
-        let number: usize = number_chrs.as_str().parse().unwrap();
-
-        Action::IfCharacterLength(options.contains('!'), ordering, number)
-      }, 1, argc)
-    },
-    "if_contains" => {
-      check_action_args!(Action::IfContains(options.contains('!'), arguments[0].to_owned()), 1, argc)
-    },
-    "reverse" => Ok(Action::Reverse), 
-    "clone" => Ok(Action::Clone), 
-    "wipe" => Ok(Action::Wipe), 
-    "nothing" => Ok(Action::Nothing), 
-    "uppercase_all" => Ok(Action::UppercaseAll), 
-    "lowercase_all" => Ok(Action::LowercaseAll), 
-    "remove_last_letter" => Ok(Action::RemoveLastLetter), 
-    "remove_first_letter" => Ok(Action::RemoveFirstLetter), 
-    "remove" => Ok(Action::Remove), 
-    _ => Err(MutationBuildError::ActionDoesNotExist),
-  }
+impl Action {
+  pub fn from_string(action: &str, arguments: Vec<&str>, options: &str) -> Result<Action, MutationBuildError> {
+    let argc = arguments.len();
+  
+    match action {
+      "prepend" => {
+        check_action_args!(Action::Prepend(arguments[0].to_owned()), 1, argc)
+      },
+      "append" => {
+        check_action_args!(Action::Append(arguments[0].to_owned()), 1, argc)
+      },
+      "replace" => {
+        check_action_args!(Action::Replace(arguments[0].to_owned(), arguments[1].to_owned()), 2, argc)
+      }, 
+      "if_length" => {
+        check_action_args!({
+          let arg_chrs: Vec<char> = arguments[0].chars().collect();
+          let first_chr = arg_chrs.first().unwrap();
+          
+          let ordering = match first_chr {
+            '>' => Ordering::Greater,
+            '<' => Ordering::Less,
+            '=' => Ordering::Equal,
+            _ => {
+              return Err(MutationBuildError::InvalidArgument(String::from("missing operator")))
+            }
+          };
+  
+          let mut number_chrs = arguments[0].chars();
+          number_chrs.next();
+          let number: usize = number_chrs.as_str().parse().unwrap();
+  
+          Action::IfCharacterLength(options.contains('!'), ordering, number)
+        }, 1, argc)
+      },
+      "if_contains" => {
+        check_action_args!(Action::IfContains(options.contains('!'), arguments[0].to_owned()), 1, argc)
+      },
+      "reverse" => Ok(Action::Reverse), 
+      "clone" => Ok(Action::Clone), 
+      "wipe" => Ok(Action::Wipe), 
+      "nothing" => Ok(Action::Nothing), 
+      "uppercase_all" => Ok(Action::UppercaseAll), 
+      "lowercase_all" => Ok(Action::LowercaseAll), 
+      "remove_last_letter" => Ok(Action::RemoveLastLetter), 
+      "remove_first_letter" => Ok(Action::RemoveFirstLetter), 
+      "remove" => Ok(Action::Remove), 
+      _ => Err(MutationBuildError::ActionDoesNotExist),
+    }
+  }  
 }
 
 pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
@@ -250,7 +261,7 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
 
     mutation_split.remove(0);
 
-    match build_action(mutation_action, mutation_split, mutation_options) {
+    match Action::from_string(mutation_action, mutation_split, mutation_options) {
       Ok(m) => {
         mutations.push(Mutation { action: m, times: mutation_runtimes, keep_original: mutation_options.contains('k') })
       },
@@ -259,13 +270,4 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
   }
 
   mutations
-}
-
-pub fn empty_mutation_set() -> MutationSet {
-  let mutation = Mutation {
-    action: Action::Nothing,
-    times: 1,
-    keep_original: false
-  };
-  MutationSet { mutations: vec![ mutation ] }
 }

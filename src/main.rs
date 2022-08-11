@@ -17,7 +17,7 @@ use mutation::MutationResult;
 
 use crate::{
   arguments::ProgramArgs, 
-  mutation::{parse_mutation_string, empty_mutation_set, MutationSet}, 
+  mutation::{parse_mutation_string, MutationSet}, 
   yaml_parser::get_mutation_sets, 
   formatting::{tokenize_format_string, token_iterator},
   website_scraper::{download_page, extract_words}
@@ -90,7 +90,7 @@ fn main() {
 
   if gorilla.mutation_sets.is_empty() {
     println!("gorilla: (warning) missing mutation sets");
-    gorilla.mutation_sets.push(empty_mutation_set())
+    gorilla.mutation_sets.push(MutationSet::empty_set())
   } else {
     println!("gorilla: mutation sets summary");
     for mutation_set in &gorilla.mutation_sets {
