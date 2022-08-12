@@ -123,7 +123,8 @@ impl Mutation {
           result.push(input.to_owned())
         }
       },
-      Action::FirstLetter => result.push( input.chars().next().unwrap().to_string() ),
+      Action::FirstLetter => result.push( input.chars().next()
+        .map_or(String::from(""), |x| x.to_string()) ),
       Action::Reverse => result.push(input.chars().rev().collect()),
       Action::UppercaseAll => result.push(input.to_uppercase()),
       Action::LowercaseAll => result.push(input.to_lowercase()),

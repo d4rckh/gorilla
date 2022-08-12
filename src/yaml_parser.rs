@@ -85,10 +85,16 @@ pub fn parse_formatting_yaml(yaml_input: &str) -> FormattingSets {
 
         let mut mutation_strings = Vec::new();
 
-        for yaml_mut_str in fmt_str[1].as_vec().unwrap() {
-          if let Some(fmt_str) = yaml_mut_str.as_str() {
-            mutation_strings.push(fmt_str.to_owned())
+        if let Some(yaml_mut_vec) = fmt_str[1].as_vec() { 
+          for yaml_mut_str in yaml_mut_vec {
+            if let Some(fmt_str) = yaml_mut_str.as_str() {
+              mutation_strings.push(fmt_str.to_owned())
+            }
           }
+        }
+
+        if let Some(yaml_mut_str) = fmt_str[1].as_str() { 
+          mutation_strings.push(yaml_mut_str.to_owned())
         }
 
         format_set.parts.push(

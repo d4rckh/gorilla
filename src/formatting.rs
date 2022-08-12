@@ -36,7 +36,7 @@ impl FormatFieldAnswer {
 }
 
 impl FormattingSets {
-  // TODO: make this an iterator instead
+  // TODO: foloseste un iterator in loc de functia asta jegoasa
   pub fn generate_words(&self, answers: Vec<FormatFieldAnswer>) -> Vec<String> {
     let mut result: Vec<String> = Vec::new();
 

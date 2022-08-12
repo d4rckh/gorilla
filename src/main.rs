@@ -56,7 +56,7 @@ impl Gorilla {
             print!("(in {:?}) ", 
               SystemTime::now()
                 .duration_since(self.start_time)
-                .unwrap()
+                .expect("time may have gone backwards")
             );
           }
           print!("{s}{}", self.output_separator)
@@ -108,7 +108,8 @@ fn main() {
   }
 
   if let Some(formatting_path) = &gorilla.program_args.from_formatting {
-    let yaml_input = &fs::read_to_string(formatting_path).unwrap();
+    let yaml_input = &fs::read_to_string(formatting_path)
+      .expect("could not open file containing custom formats");
     let fmt_sets = parse_formatting_yaml(yaml_input);
     let mut fmt_answers: Vec<FormatFieldAnswer> = Vec::new();
 
