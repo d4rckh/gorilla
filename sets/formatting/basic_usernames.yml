@@ -1,0 +1,11 @@
+name: basic_usernames
+
+fields:
+  - [ f_name ]
+  - [ l_name ]
+
+formatting_sets:
+  - [ "{f_name}_{l_name}" ]
+  - [ "{l_name}{f_name}" ]
+  - [ ["{f_name}", [1st_letter]], "_{l_name}" ]
+  - [ ["{f_name}", [1st_letter]], "{l_name}" ]

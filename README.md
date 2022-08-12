@@ -2,6 +2,7 @@
 
 gorilla is the ultimate wordlist tool packing a lot of amazing utilities like:
 - building wordlists based on patterns (like [crunch](https://github.com/jim3ma/crunch))
+- build wordlists based on common password/username formats (like [cupp](https://github.com/Mebus/cupp))
 - scrap a web page and build a wordlist from its words (like [cewl](https://github.com/digininja/CeWL))
 - extending existing wordlists using mutations (like [hashcat's rule based attack](https://hashcat.net/wiki/doku.php?id=rule_based_attack))
 
@@ -145,3 +146,31 @@ Notice we had to add another mutation set that begins with the negated version o
 ## other mutations
 
 gorilla supports many other mutations and since the tool is in early development it would be very painful to maintain a list of them here. If you are curious about the other mutations, you can check out the `Action` enum from `src/mutation.rs` file.
+
+## using common password/username formats to build wordlists 
+
+Formats are defined in formatting sets via yaml files and are supplied to gorilla via the `--from-formatting`/`-q` argument. Currently there's only one formatting set made, it is located at `sets/formatting/basic_usernames.yml`. And it looks (similar) to this.
+
+```yaml
+name: basic_usernames
+
+fields:
+  - [ f_name ]
+  - [ l_name ]
+
+formatting_sets:
+  - [ "{f_name}_{l_name}" ]
+  - [ "{l_name}{f_name}" ]
+  - [ ["{f_name}", [1st_letter]], "_{l_name}" ]
+  - [ ["{f_name}", [1st_letter]], "{l_name}" ]
+```
+
+The required fields are `name`, `fields` and `formatting_sets`. The `fields` value is the user's profile and it contains information that is later used in the `formatting_sets`.
+
+Each formatting set is an array of strings that are later appended. So `["{f_name}", "{l_name}"]` is equivalent to `["{f_name}{l_name}"]`. Instead of a string, you can supply an array, this allows you to apply mutations that you have used before to extend wordlists.
+
+```yaml
+- [ "{f_name}_", [ "{l_name}", [ reverse ] ] ]
+```
+
+If the `f_name` is `joe` and `l_name` is `doe`, the resulting formatting will generate `joe_eod`. Mutations useful in formatting sets are `remove_last_letter`, `remove_first_letter` and `1st_letter`

@@ -1,5 +1,6 @@
 mod arguments;
 mod mutation;
+mod patterns;
 mod formatting;
 mod yaml_parser;
 mod website_scraper;
@@ -7,8 +8,8 @@ mod website_scraper;
 mod tests;
 
 use std::{
-  fs::{File, self, OpenOptions}, 
-  io::{BufReader, BufRead}, time::SystemTime
+  fs::{self, File, OpenOptions}, 
+  io::{self, BufReader, BufRead, Write}, time::SystemTime
 };
 
 use clap::Parser;
@@ -18,9 +19,9 @@ use mutation::MutationResult;
 use crate::{
   arguments::ProgramArgs, 
   mutation::{parse_mutation_string, MutationSet}, 
-  yaml_parser::get_mutation_sets, 
-  formatting::{tokenize_format_string, token_iterator},
-  website_scraper::{download_page, extract_words}
+  yaml_parser::{get_mutation_sets, parse_formatting_yaml}, 
+  patterns::{tokenize_format_string, token_iterator},
+  website_scraper::{download_page, extract_words}, formatting::FormatFieldAnswer
 };
 
 struct Gorilla {
@@ -51,11 +52,12 @@ impl Gorilla {
 
       for s in &mutation_result.mutated_words {
         if self.file_save.is_none() { 
-          if self.program_args.timer { print!("(in {:?}) ", 
-            SystemTime::now()
-              .duration_since(self.start_time)
-              .unwrap()
-            ) 
+          if self.program_args.timer { 
+            print!("(in {:?}) ", 
+              SystemTime::now()
+                .duration_since(self.start_time)
+                .unwrap()
+            );
           }
           print!("{s}{}", self.output_separator)
         }
@@ -102,6 +104,36 @@ fn main() {
         print!(" -> {}", mutation.to_string().blue());
       }
       println!()
+    }
+  }
+
+  if let Some(formatting_path) = &gorilla.program_args.from_formatting {
+    let yaml_input = &fs::read_to_string(formatting_path).unwrap();
+    let fmt_sets = parse_formatting_yaml(yaml_input);
+    let mut fmt_answers: Vec<FormatFieldAnswer> = Vec::new();
+
+    for q in &fmt_sets.fields {
+      let mut buffer = String::new();
+      
+      if let Some(question) = &q.question {
+        print!("(?) {}: ", question.blue())
+      } else {
+        print!("(?) Fill in {}: ", q.name.blue())
+      }
+      io::stdout().flush().unwrap();
+      io::stdin().read_line(&mut buffer).unwrap();
+
+      fmt_answers.push(
+        FormatFieldAnswer { name: q.name.to_owned(), answer: buffer.trim().to_owned() }
+      )
+    }
+
+    // reset start time bcuz we dont want to time how much it took the user to
+    // answer the questions
+    gorilla.start_time = SystemTime::now();
+  
+    for gen_word in fmt_sets.generate_words(fmt_answers) {
+      gorilla.mutate_word(gen_word);
     }
   }
 

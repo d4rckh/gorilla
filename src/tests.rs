@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod token_tests {
-  use crate::formatting::{tokenize_format_string, token_iterator, Token};
+  use crate::patterns::{tokenize_format_string, token_iterator, Token};
 
   #[test]
   fn tokenize_string_repeat() {

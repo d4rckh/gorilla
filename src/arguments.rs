@@ -37,6 +37,13 @@ pub struct ProgramArgs {
   pub pattern_input: Option<String>,
 
   #[clap (
+    short='q',
+    long="from-formatting",
+    help="Generate words from custom formatting applied"
+  )]
+  pub from_formatting: Option<String>,
+
+  #[clap (
     short='w',
     long="from-website",
     help="Spider a website and generate a wordlist from it's page contents"

@@ -1,12 +1,14 @@
 use std::{fmt::{Display, self}, fs, io::Write, cmp::Ordering};
 
-use crate::formatting::{tokenize_format_string, token_iterator};
+use crate::patterns::{tokenize_format_string, token_iterator};
 
 #[derive(Debug)]
 pub enum Action {
   Prepend(String),
   Append(String), 
   Replace(String, String),
+
+  FirstLetter,
   LowercaseAll,
   UppercaseAll,
   RemoveFirstLetter,
@@ -121,6 +123,7 @@ impl Mutation {
           result.push(input.to_owned())
         }
       },
+      Action::FirstLetter => result.push( input.chars().next().unwrap().to_string() ),
       Action::Reverse => result.push(input.chars().rev().collect()),
       Action::UppercaseAll => result.push(input.to_uppercase()),
       Action::LowercaseAll => result.push(input.to_lowercase()),
@@ -146,6 +149,7 @@ impl Display for Mutation {
       Action::Clone => write!(f, "clone"),
       Action::Wipe => write!(f, "wipe"),
       Action::Nothing => write!(f, "nothing"),
+      Action::FirstLetter => write!(f, "first letter"),
       Action::UppercaseAll => write!(f, "uppercase all"),
       Action::LowercaseAll => write!(f, "lowercase all"),
       Action::Remove => write!(f, "remove"),
@@ -217,6 +221,7 @@ impl Action {
       "reverse" => Ok(Action::Reverse), 
       "clone" => Ok(Action::Clone), 
       "wipe" => Ok(Action::Wipe), 
+      "1st_letter" => Ok(Action::FirstLetter), 
       "nothing" => Ok(Action::Nothing), 
       "uppercase_all" => Ok(Action::UppercaseAll), 
       "lowercase_all" => Ok(Action::LowercaseAll), 
