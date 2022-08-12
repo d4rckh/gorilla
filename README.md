@@ -167,6 +167,12 @@ formatting_sets:
 
 The required fields are `name`, `fields` and `formatting_sets`. The `fields` value is the user's profile and it contains information that is later used in the `formatting_sets`.
 
+If you run the set, you will be prompted for each field and the usernames will be generated.
+
+![image](https://user-images.githubusercontent.com/35298550/184354813-fd008441-3188-4ef6-98b0-9e4573956d8c.png)
+
+(of course, you can use the other arguments normally, like `--mutations-file`/`-f` to generate new words via mutations or `--output-file`/`-o` to save the words)
+
 Each formatting set is an array of strings that are later appended. So `["{f_name}", "{l_name}"]` is equivalent to `["{f_name}{l_name}"]`. Instead of a string, you can supply an array, this allows you to apply mutations that you have used before to extend wordlists.
 
 ```yaml
