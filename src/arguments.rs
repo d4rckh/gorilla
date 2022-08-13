@@ -44,6 +44,13 @@ pub struct ProgramArgs {
   pub from_formatting: Option<String>,
 
   #[clap (
+    short='c',
+    long="with-csv",
+    help="Use a CSV as input for formatting fields"
+  )]
+  pub csv: Option<String>,
+
+  #[clap (
     short='w',
     long="from-website",
     help="Spider a website and generate a wordlist from it's page contents"

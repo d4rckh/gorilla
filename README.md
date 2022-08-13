@@ -180,3 +180,13 @@ Each formatting set is an array of strings that are later appended. So `["{f_nam
 ```
 
 If the `f_name` is `joe` and `l_name` is `doe`, the resulting formatting will generate `joe_eod`. Mutations useful in formatting sets are `remove_last_letter`, `remove_first_letter` and `1st_letter`
+
+If you want to apply a formatting sets to many user profiles, you can use the `--with-csv`/`-c` argument to supply a CSV file. For the `basic_usernames` formatting set, the CSV should be formatted like this:
+
+```csv
+f_name,l_name
+joe,doe
+james,smith
+robert,smith
+```
+

@@ -20,6 +20,7 @@ pub struct FormattingSets {
   pub sets: Vec<FormatSet>
 }
 
+#[derive(Debug)]
 pub struct FormatFieldAnswer {
   pub name: String,
   pub answer: String
@@ -36,6 +37,20 @@ impl FormatFieldAnswer {
 }
 
 impl FormattingSets {
+  pub fn check_answer_names(&self, answers: &Vec<FormatFieldAnswer>) {
+    let names: Vec<String> = self.fields
+      .iter()
+      .map(|x| x.name.to_owned())
+      .collect();
+
+    for answer in answers {
+      if !names.contains(&answer.name) {
+        println!("gorilla: (error) invalid field name: {}. Valid names: {names:?}", answer.name);
+        panic!()
+      }
+    }
+  }
+
   // TODO: foloseste un iterator in loc de functia asta jegoasa
   pub fn generate_words(&self, answers: Vec<FormatFieldAnswer>) -> Vec<String> {
     let mut result: Vec<String> = Vec::new();
