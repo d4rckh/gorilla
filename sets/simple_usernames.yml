@@ -1,0 +1,12 @@
+name: simple_usernames
+
+mutation_sets:
+  - [ nothing ]
+  - [ "append:{0-9}" ]
+  - [ "append:_" ]
+  - [ "prepend:_" ]
+  - [ "replace:o:0",
+      "replace:a:4",
+      "replace:e:3",
+      "replace:i:1"
+    ]
