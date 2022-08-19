@@ -5,6 +5,7 @@ mod formatting;
 mod yaml_parser;
 mod csv_parser;
 mod website_scraper;
+mod char_sets;
 
 mod tests;
 

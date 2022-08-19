@@ -1,16 +1,20 @@
 use std::{fmt::{Display, self}, vec};
 
+use crate::char_sets;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
   String(String),
-  Repeat(u32, u32, u32)
+  Repeat(u32, u32, u32),
+  CharSet(String, usize)
 }
 
 impl Display for Token {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     match self {
       Token::String(s) => write!(f, "string: {}", s),
-      Token::Repeat(start, end, _) => write!(f, "repeat: {} -> {}", start, end)
+      Token::Repeat(start, end, _) => write!(f, "repeat: {} -> {}", start, end),
+      Token::CharSet(ch_set, _) => write!(f, "char_set: {}", ch_set)
     }
   }
 }
@@ -30,15 +34,28 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
       cur.clear();
     } else if character == '}' {
       inside_repeat = !inside_repeat;
-      let ch_start = cur.chars().next().unwrap();
-      let ch_end = cur.chars().nth(2).unwrap();
-      result.push(
-        Token::Repeat(
-          ch_start as u32, 
-          ch_end as u32,
-          ch_start as u32
+      let inside_len = cur.chars().collect::<Vec<char>>().len(); 
+      if inside_len > 2 {
+        let ch_start = cur.chars().next().unwrap();
+        let ch_end = cur.chars().nth(2).unwrap();
+        result.push(
+          Token::Repeat(
+            ch_start as u32, 
+            ch_end as u32,
+            ch_start as u32
+          )
+        );
+      } else if inside_len == 1 {
+        result.push(
+          match cur.chars().next().unwrap() {
+            'l' => Token::CharSet(char_sets::L_CH.to_owned(), 0),
+            'u' => Token::CharSet(char_sets::U_CH.to_owned(), 0),
+            'd' => Token::CharSet(char_sets::D_CH.to_owned(), 0),
+            's' => Token::CharSet(char_sets::S_CH.to_owned(), 0),
+            _ => Token::String(String::from(""))
+          }
         )
-      );
+      }
       cur.clear();
     } else { cur.push(character) };
   }
@@ -62,7 +79,7 @@ pub fn token_iterator(tokens: &[Token]) -> TokenIter {
   TokenIter { 
     toks: tokens.to_owned(), done: false,
     repeat_len: tokens.iter()
-      .filter(|e| matches!(e, Token::Repeat(_, _, _)))
+      .filter(|e| matches!(e, Token::Repeat(_, _, _)) || matches!(e, Token::CharSet(_, _)))
       .count()
   }
 }
@@ -102,6 +119,24 @@ impl Iterator for TokenIter {
           }
 
           current_tok += 1;        
+        },
+        Token::CharSet(ch_set, cur) => {
+          result.push(ch_set.chars().nth(*cur).unwrap());
+
+          if !inc_next { continue }
+
+          if *cur != (ch_set.len() - 1 ) {
+            inc_next = false;
+            *cur += 1;
+            continue;
+          }
+
+          if current_tok == self.repeat_len {
+            self.done = true;
+            return Some(result)
+          }
+
+          current_tok += 1;
         }
       }
     }
@@ -123,6 +158,9 @@ impl TokenIter {
       if let Token::Repeat(start, end, _) = tok {
         result *= (*end as u128) - (*start as u128) + 1
       }
+      if let Token::CharSet(ch_set, _) = tok {
+        result *= ch_set.len() as u128
+      }
     }
 
     result
@@ -134,7 +172,8 @@ impl TokenIter {
     for tok in &self.toks {
       match tok {
         Token::String(s) => sample_str.push_str(s),
-        Token::Repeat(start, _, _) => sample_str.push(char::from_u32(*start).unwrap())
+        Token::Repeat(start, _, _) => sample_str.push(char::from_u32(*start).unwrap()),
+        Token::CharSet(ch_set, _) => sample_str.push(ch_set.chars().next().unwrap())
       }
     }
 
@@ -143,58 +182,3 @@ impl TokenIter {
     sample_str.len() as u128 * self.calculate_total()
   }
 }
-
-// pub fn execute_format_string(tokens: &Vec<Token>) -> Vec<String> {
-//   let mut token_values: Vec<Vec<Token>> = vec![ tokens.to_vec() ];
-
-//   loop {
-//     let mut found_repeat = false;
-//     let mut new_token_values: Vec<Vec<Token>> = vec![];
-
-//     for tokens in &token_values {
-//       for (token_index, token) in tokens.iter().enumerate() {
-//         match token {
-//           Token::Repeat(start, end) => {
-//             found_repeat = true;
-
-//             for i in *start..(*end+1) {
-//               let mut new_tokens = tokens.clone();
-//               new_tokens[token_index] = Token::String(
-//                 char::from_u32(i).unwrap().to_string()
-//               );
-
-//               new_token_values.push(new_tokens)
-//             }
-
-//             break
-//           }
-//           _ => ()
-//         }
-//       }
-//     }
-
-//     if !found_repeat { break; } 
-//     else { token_values = new_token_values; }
-//   }
-
-//   let mut result: Vec<String> = vec![];
-
-//   let mut string_format = String::new();
-//   for tokens in &token_values {
-
-//     for token in tokens {
-//       match token {
-//         Token::String(a) => {
-//           let token_string = a.clone();
-//           string_format.push_str(&token_string)
-//         }
-//         _ => ()
-//       }
-//     }
-
-//     result.push(string_format.clone());
-//     string_format.clear();
-//   }
-
-//   result
-// }
