@@ -28,6 +28,7 @@ If you want to save the output to a file, you can use the `--output-file`/`-o` a
 
 ![image](https://user-images.githubusercontent.com/35298550/183973643-3191f7a0-7dda-4e4f-8f10-eaaa4d748874.png)
 
+Gorilla now also supports character sets. They are defined in `src/char_sets.rs`. Here are some examples of patterns that use them: `{l}` => a b c d ... z; `{u}` => A B C D ... Z; `{d}` => 1 2 3 4 ... 9; `{s}` => (space) ! " # $ ... ~ 
 
 ## modifying existing wordlists using mutations/rules
 
