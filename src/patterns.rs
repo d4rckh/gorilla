@@ -131,6 +131,9 @@ impl Iterator for TokenIter {
             continue;
           }
 
+          inc_next = true;
+          *cur = 0;
+
           if current_tok == self.repeat_len {
             self.done = true;
             return Some(result)
