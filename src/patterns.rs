@@ -6,7 +6,8 @@ use crate::char_sets;
 pub enum Token {
   String(String),
   Repeat(u32, u32, u32),
-  CharSet(String, usize)
+  CharSet(String, usize),
+  Numbers(u32, u32, u32)
 }
 
 impl Display for Token {
@@ -14,7 +15,8 @@ impl Display for Token {
     match self {
       Token::String(s) => write!(f, "string: {}", s),
       Token::Repeat(start, end, _) => write!(f, "repeat: {} -> {}", start, end),
-      Token::CharSet(ch_set, _) => write!(f, "char_set: {}", ch_set)
+      Token::CharSet(ch_set, _) => write!(f, "char_set: {}", ch_set),
+      Token::Numbers(start, end, _) => write!(f, "numbers: {} -> {}", start, end)
     }
   }
 }
@@ -35,7 +37,17 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
     } else if character == '}' {
       inside_repeat = !inside_repeat;
       let inside_len = cur.chars().collect::<Vec<char>>().len(); 
-      if inside_len > 2 {
+      if inside_len >= 4 && cur.contains('-') {
+        let start_num = cur.split('-').nth(0).unwrap();
+        let end_num = cur.split('-').nth(1).unwrap();
+        result.push(
+          Token::Numbers(
+            start_num.parse::<u32>().unwrap(), 
+            end_num.parse::<u32>().unwrap(), 
+            0
+          )
+        )
+      } else if inside_len > 2 {
         let ch_start = cur.chars().next().unwrap();
         let ch_end = cur.chars().nth(2).unwrap();
         result.push(
@@ -79,7 +91,10 @@ pub fn token_iterator(tokens: &[Token]) -> TokenIter {
   TokenIter { 
     toks: tokens.to_owned(), done: false,
     repeat_len: tokens.iter()
-      .filter(|e| matches!(e, Token::Repeat(_, _, _)) || matches!(e, Token::CharSet(_, _)))
+      .filter(|e| 
+        matches!(e, Token::Repeat(_, _, _)) || 
+        matches!(e, Token::CharSet(_, _)) ||
+        matches!(e, Token::Numbers(_, _, _)))
       .count()
   }
 }
@@ -99,6 +114,26 @@ impl Iterator for TokenIter {
     for tok in &mut self.toks {
       match tok {
         Token::String(s) => result.push_str(s),
+        Token::Numbers(start, end, cur) => {
+          result.push_str(&(*start + *cur).to_string());
+          
+          if !inc_next { continue; }
+
+          if *cur + *start != *end {
+            inc_next = false;
+            *cur += 1;
+            continue;
+          } 
+
+          *cur = 0;
+
+          if current_tok == self.repeat_len {
+            self.done = true;
+            return Some(result);
+          }
+
+          current_tok += 1;
+        },
         Token::Repeat(start, end, cur) => {
           result.push(char::from_u32(*cur).unwrap());          
         
@@ -162,6 +197,9 @@ impl TokenIter {
       if let Token::CharSet(ch_set, _) = tok {
         result *= ch_set.len() as u128
       }
+      if let Token::Numbers(start, end, _) = tok {
+        result *= (*end as u128) - (*start as u128) + 1
+      }
     }
 
     result
@@ -174,7 +212,8 @@ impl TokenIter {
       match tok {
         Token::String(s) => sample_str.push_str(s),
         Token::Repeat(start, _, _) => sample_str.push(char::from_u32(*start).unwrap()),
-        Token::CharSet(ch_set, _) => sample_str.push(ch_set.chars().next().unwrap())
+        Token::CharSet(ch_set, _) => sample_str.push(ch_set.chars().next().unwrap()),
+        Token::Numbers(start, _, _) => sample_str.push_str(&start.to_string())
       }
     }
 

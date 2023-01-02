@@ -8,13 +8,6 @@ pub fn download_page(page_url: &str) -> Result<String, ureq::Error> {
   Ok(body)
 }
 
-// pub fn remove_script_tags(page_body: &str) -> String {
-//   let mut body_wo_scripts = String::new();
-
-
-//   body_wo_scripts
-// }
-
 pub fn extract_words(page_body: &str) -> Vec<String> {
   let mut words: Vec<String> = vec![ ];
   
