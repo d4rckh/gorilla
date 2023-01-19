@@ -7,15 +7,6 @@ pub fn download_page(page_url: &str) -> Result<String, ureq::Error> {
     Ok(body)
 }
 
-/// Remove everything from page_body except the
-/// HTML within the <body></body> HTML tags.
-fn just_body_html_content(all_html: &str) -> String {
-    let fragment = Html::parse_document(all_html);
-    let selector = Selector::parse("body").unwrap();
-    let body = fragment.select(&selector).next().unwrap();
-    body.text().collect::<Vec<&str>>().join(" ")
-}
-
 pub fn extract_words(page_body: &str) -> Vec<String> {
     let page_body = just_body_html_content(page_body);
 
@@ -41,4 +32,23 @@ pub fn extract_words(page_body: &str) -> Vec<String> {
     }
 
     words
+}
+
+/// Remove everything from page_body except the
+/// HTML within the <body></body> HTML tags.
+/// If no <body> tag is found, or there's any other error,
+/// this function just silently returns the given
+/// all_html
+fn just_body_html_content(all_html: &str) -> String {
+    let fragment = Html::parse_document(all_html);
+    let selector = match Selector::parse("body") {
+        Ok(body_selector) => body_selector,
+        Err(_e) => return all_html.to_string(),
+    };
+    let body = match fragment.select(&selector).next() {
+        Some(body) => body,
+        None => return all_html.to_string(),
+    };
+
+    body.text().collect::<Vec<&str>>().join(" ")
 }
