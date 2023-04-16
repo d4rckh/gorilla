@@ -37,29 +37,24 @@ pub fn extract_words(page_body: &str) -> Vec<String> {
 
 /// Remove everything from page_body except the
 /// HTML within the <body></body> HTML tags.
+/// We also will ignore any content between any and all <script> tags,
+/// if there are any.
 /// If no <body> tag is found, or there's any other error,
 /// this function just silently returns the given
 /// all_html
 pub fn just_body_html_content(all_html: &str) -> String {
-    // Count the number of <script> tags in this HTML
+    // Find all <script> tags in this HTML
     let script_selector = Selector::parse("script").unwrap();
     let fragment = Html::parse_document(all_html);
     let script_tags_found = fragment.select(&script_selector);
 
-    // Re-parse HTML, this time as mutable so that we can remove child
+    // Re-parse HTML, this time as mutable so that we can remove
     // <script> tags
     let mut fragment = Html::parse_document(all_html);
 
-    // Now perform a loop as many times as <script> tags as we found;
-    // each time removing the tag and its contents from our fragment.
-    // This is NOT clean Rust, but it's the only way I could figure out
-    // how to successfuly ignore multiple <script> tags in the same HTML
-    // document
-    for _i in script_tags_found {
-        match fragment.select(&script_selector).next() {
-            Some(script_element) => fragment.remove_from_parent(&script_element.id()),
-            None => (),
-        };
+    // Remove each <script> tag from the (now mutable) fragment
+    for script_tag in script_tags_found {
+        fragment.remove_from_parent(&script_tag.id());
     }
 
     // Prepare body tag for selection
