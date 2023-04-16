@@ -121,6 +121,19 @@ mutation_sets:
 mod scrape_tests {
     use crate::website_scraper::just_body_html_content;
     #[test]
+    fn basic_scrape() {
+        let html = "<!doctype html><html><head></head></body> \
+        <div> <h1>Example Domain</h1> \
+        <p>This domain is for use in illustrative examples in documents. You may use this \
+        domain in literature without prior coordination or asking for permission.</p> \
+        </div> \
+        </body> \
+        </html>";
+        let content = just_body_html_content(html);
+
+        assert!(content.contains("domain"));
+    }
+    #[test]
     fn ignore_script_tag() {
         let html = "<!doctype html><html><head></head></body><script>Some javascript</script> \
         <div> <h1>Example Domain</h1> \

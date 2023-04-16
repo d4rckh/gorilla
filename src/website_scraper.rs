@@ -44,8 +44,10 @@ pub fn just_body_html_content(all_html: &str) -> String {
     let mut fragment = Html::parse_document(all_html);
 
     let script_selector = Selector::parse("script").unwrap();
-    let script_element = fragment.select(&script_selector).next().unwrap();
-    fragment.remove_from_parent(&script_element.id());
+    match fragment.select(&script_selector).next() {
+        Some(script_element) => fragment.remove_from_parent(&script_element.id()),
+        None => (),
+    };
 
     let body_selector = match Selector::parse("body") {
         Ok(body_selector) => body_selector,
