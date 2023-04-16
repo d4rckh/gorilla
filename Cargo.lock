@@ -311,6 +311,7 @@ dependencies = [
  "clap",
  "colored",
  "csv",
+ "markup5ever",
  "regex",
  "scraper",
  "ureq",

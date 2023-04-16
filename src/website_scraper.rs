@@ -1,3 +1,4 @@
+use markup5ever::interface::tree_builder::TreeSink;
 use regex::Regex;
 use scraper::{Html, Selector};
 
@@ -39,13 +40,18 @@ pub fn extract_words(page_body: &str) -> Vec<String> {
 /// If no <body> tag is found, or there's any other error,
 /// this function just silently returns the given
 /// all_html
-fn just_body_html_content(all_html: &str) -> String {
-    let fragment = Html::parse_document(all_html);
-    let selector = match Selector::parse("body") {
+pub fn just_body_html_content(all_html: &str) -> String {
+    let mut fragment = Html::parse_document(all_html);
+
+    let script_selector = Selector::parse("script").unwrap();
+    let script_element = fragment.select(&script_selector).next().unwrap();
+    fragment.remove_from_parent(&script_element.id());
+
+    let body_selector = match Selector::parse("body") {
         Ok(body_selector) => body_selector,
         Err(_e) => return all_html.to_string(),
     };
-    let body = match fragment.select(&selector).next() {
+    let body = match fragment.select(&body_selector).next() {
         Some(body) => body,
         None => return all_html.to_string(),
     };
