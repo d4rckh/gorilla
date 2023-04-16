@@ -125,7 +125,7 @@ fn main() {
         let fmt_sets = parse_formatting_yaml(yaml_input);
 
         if let Some(csv_path) = &gorilla.program_args.csv {
-            let answer_sets = fmt_answers_from_csv(&csv_path);
+            let answer_sets = fmt_answers_from_csv(csv_path);
             fmt_sets.check_answer_names(answer_sets.first().unwrap());
 
             for fmt_answers in answer_sets {
@@ -168,7 +168,7 @@ fn main() {
         gorilla.file_save = Some(
             OpenOptions::new()
                 .append(true)
-                .open(&file_save)
+                .open(file_save)
                 .expect("Could not output file"),
         )
     }
