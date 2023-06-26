@@ -10,7 +10,7 @@ clap = { version = "4.0.8", features = ["derive"] }
 colored = "2.0.0"
 csv = "1.1.6"
 regex = "1.6.0"
-ureq = "2.5.0"
+ureq = "2.7.1"
 # reqwest = "0.11.11"
 # tokio = { version = "1.20.1", features = ["full"] }
 yaml-rust = "0.4.5"
