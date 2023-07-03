@@ -14,7 +14,7 @@ ureq = "2.5.0"
 # reqwest = "0.11.11"
 # tokio = { version = "1.20.1", features = ["full"] }
 yaml-rust = "0.4.5"
-scraper = "0.14.0"
+scraper = "0.17.1"
 markup5ever = "0.11.0"
 
 [profile.release]
