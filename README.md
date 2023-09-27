@@ -6,7 +6,14 @@ gorilla is the ultimate wordlist tool packing a lot of amazing utilities like:
 - scrap a web page and build a wordlist from its words (like [cewl](https://github.com/digininja/CeWL))
 - extending existing wordlists using mutations (like [hashcat's rule based attack](https://hashcat.net/wiki/doku.php?id=rule_based_attack))
 
-## building
+
+## installing with cargo
+
+With Rust's [Cargo](https://www.rust-lang.org/tools/install) installed, run `cargo install --git https://github.com/d4rckh/gorilla --branch main`
+
+You should now be able to run `gorilla --help`
+
+## building with cargo
 
 ```
 cargo build --release
