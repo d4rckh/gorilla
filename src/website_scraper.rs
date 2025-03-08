@@ -1,5 +1,5 @@
-use regex::Regex;
 use scraper::{Html, Selector};
+use std::collections::BTreeSet;
 
 pub fn download_page(page_url: &str) -> Result<String, ureq::Error> {
     let body: String = ureq::get(page_url).call()?.body_mut().read_to_string()?;
@@ -9,29 +9,18 @@ pub fn download_page(page_url: &str) -> Result<String, ureq::Error> {
 
 pub fn extract_words(page_body: &str) -> Vec<String> {
     let page_body = just_body_html_content(page_body);
+    let document = Html::parse_fragment(&page_body);
+    let text_content: String = document.root_element().text().collect();
+    let mut words_set = BTreeSet::new();
 
-    let mut words: Vec<String> = vec![];
-
-    let html_tag = Regex::new("<[^>]*>").unwrap();
-
-    for line in html_tag
-        .replace_all(&page_body, "")
-        .split(' ')
-        .collect::<Vec<&str>>()
-    {
-        let trimmed_line = line.trim();
-        if !trimmed_line.is_empty() {
-            for word in trimmed_line.split(' ').collect::<Vec<&str>>() {
-                let w = word.trim().to_owned();
-                if words.contains(&w) {
-                    continue;
-                }
-                words.push(w)
-            }
+    for word in text_content.split_whitespace() {
+        let filtered_word: String = word.chars().filter(|c| c.is_alphabetic()).collect();
+        if filtered_word.len() > 4 {
+            words_set.insert(filtered_word.to_lowercase());
         }
     }
 
-    words
+    words_set.into_iter().collect()
 }
 
 /// Remove everything from page_body except the
