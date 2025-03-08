@@ -1,9 +1,8 @@
-use markup5ever::interface::tree_builder::TreeSink;
 use regex::Regex;
 use scraper::{Html, Selector};
 
 pub fn download_page(page_url: &str) -> Result<String, ureq::Error> {
-    let body: String = ureq::get(page_url).call()?.into_string()?;
+    let body: String = ureq::get(page_url).call()?.body_mut().read_to_string()?;
 
     Ok(body)
 }
@@ -43,32 +42,25 @@ pub fn extract_words(page_body: &str) -> Vec<String> {
 /// this function just silently returns the given
 /// all_html
 pub fn just_body_html_content(all_html: &str) -> String {
-    // Find all <script> tags in this HTML
-    let script_selector = Selector::parse("script").unwrap();
-    let fragment = Html::parse_document(all_html);
-    let script_tags_found = fragment.select(&script_selector);
+    // Parse the HTML
+    let document = Html::parse_document(all_html);
 
-    // Re-parse HTML, this time as mutable so that we can remove
-    // <script> tags
-    let mut fragment = Html::parse_document(all_html);
+    // Select the <body> tag
+    let body_selector = Selector::parse("body").unwrap();
+    if let Some(body_element) = document.select(&body_selector).next() {
+        // Extract the inner HTML of <body>
+        let mut body_html = body_element.inner_html();
 
-    // Remove each <script> tag from the (now mutable) fragment
-    for script_tag in script_tags_found {
-        fragment.remove_from_parent(&script_tag.id());
+        // Remove <script> elements
+        let script_selector = Selector::parse("script").unwrap();
+        for script in body_element.select(&script_selector) {
+            let script_html = script.html();
+            body_html = body_html.replace(&script_html, "");
+        }
+
+        return body_html;
     }
 
-    // Prepare body tag for selection
-    let body_selector = match Selector::parse("body") {
-        Ok(body_selector) => body_selector,
-        Err(_e) => return all_html.to_string(),
-    };
-    // Find first (and hopefully only) <body> tag in our
-    // modified fragment
-    let body = match fragment.select(&body_selector).next() {
-        Some(body) => body,
-        // If no <body> tag found, just return all HTML found
-        None => return all_html.to_string(),
-    };
-
-    body.text().collect::<Vec<&str>>().join(" ")
+    // If no <body> tag is found, return the original HTML
+    all_html.to_string()
 }
