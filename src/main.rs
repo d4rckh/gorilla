@@ -167,6 +167,7 @@ fn main() {
         println!("gorilla: using file {} as output", file_save.purple());
         gorilla.file_save = Some(
             OpenOptions::new()
+                .create(true)
                 .append(true)
                 .open(file_save)
                 .expect("Could not output file"),
