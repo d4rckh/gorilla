@@ -23,7 +23,7 @@ use crate::{
     arguments::ProgramArgs,
     csv_parser::fmt_answers_from_csv,
     formatting::FormatFieldAnswer,
-    mutation::{parse_mutation_string, MutationSet},
+    mutation::{MutationSet, parse_mutation_string},
     patterns::{token_iterator, tokenize_format_string},
     website_scraper::{download_page, extract_words},
     yaml_parser::{get_mutation_sets, parse_formatting_yaml},
@@ -124,41 +124,44 @@ fn main() {
             .expect("could not open file containing custom formats");
         let fmt_sets = parse_formatting_yaml(yaml_input);
 
-        if let Some(csv_path) = &gorilla.program_args.csv {
-            let answer_sets = fmt_answers_from_csv(csv_path);
-            fmt_sets.check_answer_names(answer_sets.first().unwrap());
+        match &gorilla.program_args.csv {
+            Some(csv_path) => {
+                let answer_sets = fmt_answers_from_csv(csv_path);
+                fmt_sets.check_answer_names(answer_sets.first().unwrap());
 
-            for fmt_answers in answer_sets {
+                for fmt_answers in answer_sets {
+                    for gen_word in fmt_sets.generate_words(fmt_answers) {
+                        gorilla.mutate_word(gen_word);
+                    }
+                }
+            }
+            _ => {
+                let mut fmt_answers: Vec<FormatFieldAnswer> = Vec::new();
+
+                for q in &fmt_sets.fields {
+                    let mut buffer = String::new();
+
+                    if let Some(question) = &q.question {
+                        eprint!("(?) {}: ", question.blue())
+                    } else {
+                        eprint!("(?) Fill in {}: ", q.name.blue())
+                    }
+                    io::stdout().flush().unwrap();
+                    io::stdin().read_line(&mut buffer).unwrap();
+
+                    fmt_answers.push(FormatFieldAnswer {
+                        name: q.name.to_owned(),
+                        answer: buffer.trim().to_owned(),
+                    })
+                }
+
+                // reset start time bcuz we dont want to time how much it took the user to
+                // answer the questions
+                gorilla.start_time = SystemTime::now();
+
                 for gen_word in fmt_sets.generate_words(fmt_answers) {
                     gorilla.mutate_word(gen_word);
                 }
-            }
-        } else {
-            let mut fmt_answers: Vec<FormatFieldAnswer> = Vec::new();
-
-            for q in &fmt_sets.fields {
-                let mut buffer = String::new();
-
-                if let Some(question) = &q.question {
-                    eprint!("(?) {}: ", question.blue())
-                } else {
-                    eprint!("(?) Fill in {}: ", q.name.blue())
-                }
-                io::stdout().flush().unwrap();
-                io::stdin().read_line(&mut buffer).unwrap();
-
-                fmt_answers.push(FormatFieldAnswer {
-                    name: q.name.to_owned(),
-                    answer: buffer.trim().to_owned(),
-                })
-            }
-
-            // reset start time bcuz we dont want to time how much it took the user to
-            // answer the questions
-            gorilla.start_time = SystemTime::now();
-
-            for gen_word in fmt_sets.generate_words(fmt_answers) {
-                gorilla.mutate_word(gen_word);
             }
         }
     }
@@ -202,7 +205,9 @@ fn main() {
             total_words,
             pattern_input.purple()
         );
-        eprintln!("         sizes before mutations: {b_size} bytes / {mb_size} MB / {gb_size} GB / {tb_size} TB");
+        eprintln!(
+            "         sizes before mutations: {b_size} bytes / {mb_size} MB / {gb_size} GB / {tb_size} TB"
+        );
 
         for word in ac_toks {
             gorilla.mutate_word(word);

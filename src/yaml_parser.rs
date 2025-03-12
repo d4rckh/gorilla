@@ -5,7 +5,7 @@ use colored::Colorize;
 
 use crate::{
     formatting::{FormatField, FormatPart, FormatSet, FormattingSets},
-    mutation::{parse_mutation_string, MutationSet},
+    mutation::{MutationSet, parse_mutation_string},
 };
 
 pub fn get_mutation_sets(yaml_input: &str) -> Vec<MutationSet> {
