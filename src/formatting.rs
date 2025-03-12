@@ -42,7 +42,7 @@ impl FormattingSets {
 
         for answer in answers {
             if !names.contains(&answer.name) {
-                println!(
+                eprintln!(
                     "gorilla: (error) invalid field name: {}. Valid names: {names:?}",
                     answer.name
                 );

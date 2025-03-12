@@ -7,7 +7,7 @@ pub fn fmt_answers_from_csv(csv_path: &str) -> Vec<Vec<FormatFieldAnswer>> {
 
     let mut rdr = csv::Reader::from_path(csv_path).unwrap();
 
-    println!("gorilla: parsing {} csv file", csv_path.purple());
+    eprintln!("gorilla: parsing {} csv file", csv_path.purple());
 
     let mut headers: Vec<String> = Vec::new();
 

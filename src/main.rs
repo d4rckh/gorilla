@@ -63,7 +63,7 @@ impl Gorilla {
                 }
 
                 if self.program_args.timer {
-                    print!(
+                    eprint!(
                         "(in {:?}) ",
                         SystemTime::now()
                             .duration_since(self.start_time)
@@ -106,16 +106,16 @@ fn main() {
     }
 
     if gorilla.mutation_sets.is_empty() {
-        println!("gorilla: (warning) missing mutation sets");
+        eprintln!("gorilla: (warning) missing mutation sets");
         gorilla.mutation_sets.push(MutationSet::empty_set())
     } else {
-        println!("gorilla: mutation sets summary");
+        eprintln!("gorilla: mutation sets summary");
         for mutation_set in &gorilla.mutation_sets {
-            print!(" {}", "word".dimmed());
+            eprint!(" {}", "word".dimmed());
             for mutation in &mutation_set.mutations {
-                print!(" -> {}", mutation.to_string().blue());
+                eprint!(" -> {}", mutation.to_string().blue());
             }
-            println!()
+            eprintln!()
         }
     }
 
@@ -140,9 +140,9 @@ fn main() {
                 let mut buffer = String::new();
 
                 if let Some(question) = &q.question {
-                    print!("(?) {}: ", question.blue())
+                    eprint!("(?) {}: ", question.blue())
                 } else {
-                    print!("(?) Fill in {}: ", q.name.blue())
+                    eprint!("(?) Fill in {}: ", q.name.blue())
                 }
                 io::stdout().flush().unwrap();
                 io::stdin().read_line(&mut buffer).unwrap();
@@ -164,9 +164,10 @@ fn main() {
     }
 
     if let Some(file_save) = &gorilla.program_args.file_save {
-        println!("gorilla: using file {} as output", file_save.purple());
+        eprintln!("gorilla: using file {} as output", file_save.purple());
         gorilla.file_save = Some(
             OpenOptions::new()
+                .create(true)
                 .append(true)
                 .open(file_save)
                 .expect("Could not output file"),
@@ -174,7 +175,7 @@ fn main() {
     }
 
     if let Some(file_input) = &gorilla.program_args.file_input {
-        println!("gorilla: reading words from {}", file_input.purple());
+        eprintln!("gorilla: reading words from {}", file_input.purple());
 
         let file_input = File::open(file_input).unwrap();
         let reader = BufReader::new(file_input);
@@ -196,12 +197,12 @@ fn main() {
         let gb_size = b_size / 1073741824;
         let tb_size = b_size / 1099511627776;
 
-        println!(
+        eprintln!(
             "gorilla: will generate {} words from a pattern {}",
             total_words,
             pattern_input.purple()
         );
-        println!("         sizes before mutations: {b_size} bytes / {mb_size} MB / {gb_size} GB / {tb_size} TB");
+        eprintln!("         sizes before mutations: {b_size} bytes / {mb_size} MB / {gb_size} GB / {tb_size} TB");
 
         for word in ac_toks {
             gorilla.mutate_word(word);
@@ -209,7 +210,7 @@ fn main() {
     }
 
     if let Some(website) = &gorilla.program_args.website_input {
-        println!(
+        eprintln!(
             "gorilla: scraping words from a website {}",
             website.purple()
         );
@@ -232,7 +233,7 @@ fn main() {
         .duration_since(gorilla.start_time)
         .expect("Clock may have gone backwards");
 
-    println!(
+    eprintln!(
         "gorilla: {} in {runtime_dur:?}. {} words -> {} words",
         "finished".green().bold(),
         gorilla.word_counter.to_string().red(),

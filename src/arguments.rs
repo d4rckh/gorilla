@@ -2,8 +2,8 @@ use clap::{Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[clap(
-    author = "d4rckh",
-    version = "v1.0",
+    author,
+    version,
     about = "a wordlist generator",
     long_about = "if you want to contribute to this project, check out the github repo: https://github.com/d4rckh/gorilla"
 )]

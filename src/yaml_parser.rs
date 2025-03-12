@@ -15,7 +15,7 @@ pub fn get_mutation_sets(yaml_input: &str) -> Vec<MutationSet> {
 
     let doc = &docs[0];
 
-    println!(
+    eprintln!(
         "gorilla: loading {} yaml mutations",
         doc["name"].as_str().unwrap().purple()
     );
@@ -40,7 +40,7 @@ pub fn parse_formatting_yaml(yaml_input: &str) -> FormattingSets {
     let doc = &docs[0];
     let formatting_name = doc["name"].as_str().unwrap();
 
-    println!(
+    eprintln!(
         "gorilla: loading {} formatting sets",
         formatting_name.purple()
     );
