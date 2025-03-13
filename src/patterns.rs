@@ -33,8 +33,10 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
     for character in input.chars() {
         if character == '{' && !inside_repeat {
             inside_repeat = !inside_repeat;
-            result.push(Token::String(cur.clone()));
-            cur.clear();
+            if !cur.is_empty() {
+                result.push(Token::String(cur.clone()));
+                cur.clear();
+            }
         } else if character == '}' {
             inside_repeat = !inside_repeat;
             let inside_len = cur.chars().collect::<Vec<char>>().len();
@@ -46,7 +48,7 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
                     end_num.parse::<u32>().unwrap(),
                     0,
                 ))
-            } else if inside_len > 2 {
+            } else if inside_len > 2 && cur.contains('-') {
                 let ch_start = cur.chars().next().unwrap();
                 let ch_end = cur.chars().nth(2).unwrap();
                 result.push(Token::Repeat(
@@ -54,14 +56,25 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
                     ch_end as u32,
                     ch_start as u32,
                 ));
-            } else if inside_len == 1 {
-                result.push(match cur.chars().next().unwrap() {
-                    'l' => Token::CharSet(char_sets::L_CH.to_owned(), 0),
-                    'u' => Token::CharSet(char_sets::U_CH.to_owned(), 0),
-                    'd' => Token::CharSet(char_sets::D_CH.to_owned(), 0),
-                    's' => Token::CharSet(char_sets::S_CH.to_owned(), 0),
-                    _ => Token::String(String::from("")),
-                })
+            } else {
+                // Combine character sets for multi-charset tokens
+                let mut combined_charset = String::new();
+                for ch in cur.chars() {
+                    match ch {
+                        'l' => combined_charset.push_str(char_sets::L_CH),
+                        'u' => combined_charset.push_str(char_sets::U_CH),
+                        'd' => combined_charset.push_str(char_sets::D_CH),
+                        's' => combined_charset.push_str(char_sets::S_CH),
+                        _ => {} // Ignore unsupported characters
+                    }
+                }
+
+                if !combined_charset.is_empty() {
+                    result.push(Token::CharSet(combined_charset, 0));
+                } else if !cur.is_empty() {
+                    // Fallback if no valid charsets found
+                    result.push(Token::String(cur.clone()));
+                }
             }
             cur.clear();
         } else {
@@ -69,8 +82,9 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
         };
     }
 
-    result.push(Token::String(cur.clone()));
-    cur.clear();
+    if !cur.is_empty() {
+        result.push(Token::String(cur));
+    }
 
     // for token in &result{ println!("(debug) tokenized: {}", token) }
 
