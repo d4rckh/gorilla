@@ -193,7 +193,7 @@ impl Display for Mutation {
 // }
 
 macro_rules! check_action_args {
-    ($action:expr, $requiredArgs:expr, $actualArgs:expr) => {
+    ($action:expr_2021, $requiredArgs:expr_2021, $actualArgs:expr_2021) => {
         if $actualArgs > ($requiredArgs - 1) {
             Ok($action)
         } else {
@@ -237,7 +237,7 @@ impl Action {
                             _ => {
                                 return Err(MutationBuildError::InvalidArgument(String::from(
                                     "missing operator",
-                                )))
+                                )));
                             }
                         };
 
