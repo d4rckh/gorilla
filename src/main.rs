@@ -4,10 +4,10 @@ mod csv_parser;
 mod formatting;
 mod mutation;
 mod patterns;
+mod tests;
+mod threading;
 mod website_scraper;
 mod yaml_parser;
-mod threading;
-mod tests;
 
 use std::fs;
 use std::fs::File;
@@ -18,43 +18,35 @@ use std::time::SystemTime;
 use clap::Parser;
 use colored::Colorize;
 
+use crate::threading::run_mutations;
 use crate::{
-    arguments::ProgramArgs, csv_parser::fmt_answers_from_csv, formatting::FormatFieldAnswer, mutation::{MutationSet, parse_mutation_string}, patterns::{calculate_sample_size_bytes, calculate_total_generations, tokenize_format_string}, threading::{distribute_token_iter_work}, website_scraper::{download_page, extract_words}, yaml_parser::{get_mutation_sets, parse_formatting_yaml}
+    arguments::ProgramArgs,
+    csv_parser::fmt_answers_from_csv,
+    formatting::FormatFieldAnswer,
+    mutation::{parse_mutation_string, MutationSet},
+    patterns::{calculate_sample_size_bytes, calculate_total_generations, tokenize_format_string},
+    threading::distribute_token_iter_work,
+    website_scraper::{download_page, extract_words},
+    yaml_parser::{get_mutation_sets, parse_formatting_yaml},
 };
 
 struct Gorilla {
     program_args: ProgramArgs,
     mutation_sets: Vec<MutationSet>,
-    word_counter: u32,
     pattern_threads: u128,
     start_time: SystemTime,
     output_separator: String,
-    sender: Option<Sender<String>>
-}
-
-impl Gorilla {
-    fn run_mutations(&mut self, word: String) {
-        self.word_counter += 1;
-
-        for mutation_set in &self.mutation_sets {
-            let mutation_result = mutation_set.perform(&word);
-
-            for s in mutation_result.mutated_words {
-                let _ = self.sender.as_ref().unwrap().send(s);
-            }
-        }
-    }
+    sender: Option<Sender<String>>,
 }
 
 fn main() {
     let mut gorilla = Gorilla {
         program_args: ProgramArgs::parse(),
         mutation_sets: vec![],
-        word_counter: 0,
         start_time: SystemTime::now(),
         output_separator: String::from('\n'),
         pattern_threads: 1,
-        sender: None
+        sender: None,
     };
 
     if gorilla.program_args.one_line {
@@ -78,7 +70,7 @@ fn main() {
             .append(&mut get_mutation_sets(yaml_input))
     }
 
-    let (tx, _) = threading::printer_thread(
+    let (tx, printer_handle) = threading::printer_thread(
         gorilla.program_args.timer,
         gorilla.start_time,
         gorilla.output_separator.clone(),
@@ -112,7 +104,7 @@ fn main() {
 
             for fmt_answers in answer_sets {
                 for gen_word in fmt_sets.generate_words(fmt_answers) {
-                    gorilla.run_mutations(gen_word);
+                    run_mutations(&gorilla.mutation_sets, &gen_word, gorilla.sender.clone().unwrap());
                 }
             }
         } else {
@@ -140,12 +132,10 @@ fn main() {
             gorilla.start_time = SystemTime::now();
 
             for gen_word in fmt_sets.generate_words(fmt_answers) {
-                gorilla.run_mutations(gen_word);
+                run_mutations(&gorilla.mutation_sets, &gen_word, gorilla.sender.clone().unwrap());
             }
         }
     }
-
-
 
     // file input
     if let Some(file_input) = &gorilla.program_args.file_input {
@@ -157,7 +147,7 @@ fn main() {
 
         for (_, l) in words_iter.enumerate() {
             let line = l.unwrap();
-            gorilla.run_mutations(line);
+            run_mutations(&gorilla.mutation_sets, &line, gorilla.sender.clone().unwrap());
         }
     }
 
@@ -177,15 +167,13 @@ fn main() {
         );
         eprintln!("         sizes before mutations: {b_size} bytes / {mb_size} MB / {gb_size} GB / {tb_size} TB");
 
-
         let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
 
         for ac_toks in thread_iterators {
             for word in ac_toks {
-                gorilla.run_mutations(word);
+                run_mutations(&gorilla.mutation_sets, &word, gorilla.sender.clone().unwrap());
             }
         }
-
     }
 
     if let Some(website) = &gorilla.program_args.website_input {
@@ -198,7 +186,7 @@ fn main() {
         let words = extract_words(&page_contents);
 
         for word in words {
-            gorilla.run_mutations(word)
+            run_mutations(&gorilla.mutation_sets, &word, gorilla.sender.clone().unwrap());
         }
     }
 
@@ -206,16 +194,7 @@ fn main() {
         println!()
     }
 
-    let end_time = SystemTime::now();
+    drop(gorilla.sender.take());
 
-    let runtime_dur = end_time
-        .duration_since(gorilla.start_time)
-        .expect("Clock may have gone backwards");
-
-    // eprintln!(
-    //     "gorilla: {} in {runtime_dur:?}. {} words -> xx words",
-    //     "finished".green().bold(),
-    //     gorilla.word_counter.to_string().red(),
-    //     //gorilla.mutation_counter.to_string().green()
-    // );
+    let _ = printer_handle.join();
 }

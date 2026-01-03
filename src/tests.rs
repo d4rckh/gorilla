@@ -33,7 +33,7 @@ mod token_tests {
 
 #[cfg(test)]
 mod mutation_tests {
-    use crate::mutation::{Action, Mutation, MutationResult, MutationSet};
+    use crate::mutation::{Action, Mutation, MutationSet};
 
     #[test]
     fn basic_mutations() {
@@ -86,7 +86,7 @@ mod mutation_tests {
 
 #[cfg(test)]
 mod yaml_test {
-    use crate::{mutation::MutationResult, yaml_parser::get_mutation_sets};
+    use crate::yaml_parser::get_mutation_sets;
 
     #[test]
     fn yaml_parse_test() {

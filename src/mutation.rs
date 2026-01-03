@@ -1,8 +1,6 @@
 use std::{
     cmp::Ordering,
     fmt::{self, Display},
-    fs,
-    io::Write,
 };
 
 use crate::patterns::{token_iterator, tokenize_format_string};
@@ -52,6 +50,8 @@ pub struct MutationSet {
 pub struct MutationResult {
     pub mutated_words: Vec<String>,
 }
+
+
 
 impl MutationSet {
     pub fn perform(&self, word: &str) -> MutationResult {

@@ -102,7 +102,7 @@ pub fn parse_formatting_yaml(yaml_input: &str) -> FormattingSets {
     }
 
     FormattingSets {
-        name: formatting_name.to_owned(),
+        _name: formatting_name.to_owned(),
         fields: format_fields,
         sets: format_sets,
     }

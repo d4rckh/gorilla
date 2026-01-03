@@ -1,4 +1,4 @@
-use crate::mutation::{MutationResult, MutationSet};
+use crate::mutation::{MutationSet};
 
 pub struct FormatPart {
     pub text: String,
@@ -15,7 +15,7 @@ pub struct FormatField {
 }
 
 pub struct FormattingSets {
-    pub name: String,
+    pub _name: String,
     pub fields: Vec<FormatField>,
     pub sets: Vec<FormatSet>,
 }

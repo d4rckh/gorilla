@@ -102,6 +102,12 @@ pub struct TokenIter {
     end_index: u128,
 }
 
+impl Display for TokenIter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} -> {}", self.current_index, self.end_index)
+    }
+}
+
 pub fn token_iterator_from_start_end(tokens: &[Token], start: u128, end: u128) -> TokenIter {
     TokenIter {
         toks: tokens.to_owned(),

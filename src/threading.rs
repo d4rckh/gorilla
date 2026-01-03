@@ -1,12 +1,19 @@
 use std::{
-    fmt::Write, fs::File, io::{self, BufWriter, stdout}, sync::{
-        Arc, atomic::{AtomicBool, Ordering}, mpsc::{self, Sender}
-    }, thread::{self, JoinHandle}, time::SystemTime, vec
+    fs::File,
+    io::{self, stdout, BufWriter},
+    sync::{
+        mpsc::{self, Sender},
+    },
+    thread::{self, JoinHandle},
+    time::SystemTime,
+    vec,
 };
 
-use crate::{
-    patterns::{calculate_total_generations, token_iterator_from_start_end, Token, TokenIter},
-};
+use colored::Colorize;
+
+use crate::{mutation::MutationSet, patterns::{
+    Token, TokenIter, calculate_total_generations, token_iterator_from_start_end
+}};
 
 pub fn distribute_token_iter_work(tokens: &Vec<Token>, threads_n: u128) -> Vec<TokenIter> {
     let mut result: Vec<TokenIter> = vec![];
@@ -30,7 +37,17 @@ pub fn distribute_token_iter_work(tokens: &Vec<Token>, threads_n: u128) -> Vec<T
 }
 
 pub struct PrinterStats {
-    saved_words: u128
+    saved_words: u128,
+}
+
+pub fn run_mutations(sets: &Vec<MutationSet>, word: &String, sender: Sender<String>) {
+    for mutation_set in sets {
+        let mutation_result = mutation_set.perform(word);
+
+        for s in mutation_result.mutated_words {
+            let _ = sender.send(s);
+        }
+    }
 }
 
 pub fn printer_thread(
@@ -42,6 +59,8 @@ pub fn printer_thread(
     let (tx, rx) = mpsc::channel::<String>();
 
     let handle = thread::spawn(move || {
+        let mut printer_stats = PrinterStats { saved_words: 0 };
+
         let mut writer: Box<dyn io::Write> = if let Some(path) = file_save_path {
             let file = File::create(path).expect("Unable to create file");
             Box::new(BufWriter::new(file))
@@ -50,6 +69,8 @@ pub fn printer_thread(
         };
 
         for mutated_word in rx {
+            printer_stats.saved_words += 1;
+
             if timer {
                 let elapsed = SystemTime::now()
                     .duration_since(start_time)
@@ -63,9 +84,21 @@ pub fn printer_thread(
                 break;
             }
         }
-        
+
         // Ensure the last bits are written to disk
         let _ = writer.flush();
+
+        let end_time = SystemTime::now();
+
+        let runtime_dur = end_time
+            .duration_since(start_time)
+            .expect("Clock may have gone backwards");
+
+        eprintln!(
+            "gorilla: {} in {runtime_dur:?}. total {} words",
+            "finished".green().bold(),
+            printer_stats.saved_words
+        );
     });
 
     (tx, handle)
