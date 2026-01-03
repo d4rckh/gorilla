@@ -29,6 +29,12 @@ pub struct ProgramArgs {
     pub pattern_input: Option<String>,
 
     #[clap(
+        long = "pattern-threads",
+        help = "Threads used for pattern generation",
+    )]
+    pub pattern_threads: Option<u128>,
+
+    #[clap(
         short = 'q',
         long = "from-formatting",
         help = "Generate words from custom formatting applied"

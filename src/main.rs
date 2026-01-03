@@ -6,27 +6,18 @@ mod mutation;
 mod patterns;
 mod website_scraper;
 mod yaml_parser;
-
+mod threading;
 mod tests;
 
 use std::{
-    fs::{self, File, OpenOptions},
-    io::{self, BufRead, BufReader, Write},
-    time::SystemTime,
+    fs::{self, File, OpenOptions}, io::{self, BufRead, BufReader, Write}, sync::mpsc, time::SystemTime
 };
 
 use clap::Parser;
 use colored::Colorize;
-use mutation::MutationResult;
 
 use crate::{
-    arguments::ProgramArgs,
-    csv_parser::fmt_answers_from_csv,
-    formatting::FormatFieldAnswer,
-    mutation::{parse_mutation_string, MutationSet},
-    patterns::{token_iterator, tokenize_format_string},
-    website_scraper::{download_page, extract_words},
-    yaml_parser::{get_mutation_sets, parse_formatting_yaml},
+    arguments::ProgramArgs, csv_parser::fmt_answers_from_csv, formatting::FormatFieldAnswer, mutation::{MutationSet, parse_mutation_string}, patterns::{calculate_sample_size_bytes, calculate_total_generations, token_iterator, tokenize_format_string}, threading::distribute_token_iter_work, website_scraper::{download_page, extract_words}, yaml_parser::{get_mutation_sets, parse_formatting_yaml}
 };
 
 struct Gorilla {
@@ -35,21 +26,17 @@ struct Gorilla {
     file_save: Option<File>,
     mutation_counter: u32,
     word_counter: u32,
+    pattern_threads: u128,
     start_time: SystemTime,
     output_separator: String,
 }
 
 impl Gorilla {
-    fn mutate_word(&mut self, word: String) {
-        let mut mutation_result = MutationResult {
-            original_word: word.clone(),
-            mutated_words: vec![],
-        };
-
+    fn run_mutations(&mut self, word: String) {
         self.word_counter += 1;
 
         for mutation_set in &self.mutation_sets {
-            mutation_set.perform(&mut mutation_result, &word);
+            let mutation_result = mutation_set.perform(&word);
 
             if let Some(save_file) = &mut self.file_save {
                 mutation_result.save_to_file(save_file)
@@ -86,10 +73,15 @@ fn main() {
         word_counter: 0,
         start_time: SystemTime::now(),
         output_separator: String::from('\n'),
+        pattern_threads: 1
     };
 
     if gorilla.program_args.one_line {
         gorilla.output_separator = String::from(' ')
+    }
+
+    if let Some(pattern_threads) = gorilla.program_args.pattern_threads {
+        gorilla.pattern_threads = pattern_threads;
     }
 
     if !gorilla.program_args.mutation_string.is_empty() {
@@ -130,7 +122,7 @@ fn main() {
 
             for fmt_answers in answer_sets {
                 for gen_word in fmt_sets.generate_words(fmt_answers) {
-                    gorilla.mutate_word(gen_word);
+                    gorilla.run_mutations(gen_word);
                 }
             }
         } else {
@@ -158,7 +150,7 @@ fn main() {
             gorilla.start_time = SystemTime::now();
 
             for gen_word in fmt_sets.generate_words(fmt_answers) {
-                gorilla.mutate_word(gen_word);
+                gorilla.run_mutations(gen_word);
             }
         }
     }
@@ -185,16 +177,15 @@ fn main() {
 
         for (_, l) in words_iter.enumerate() {
             let line = l.unwrap();
-            gorilla.mutate_word(line);
+            gorilla.run_mutations(line);
         }
     }
 
     if let Some(pattern_input) = &gorilla.program_args.pattern_input {
         let tokens = tokenize_format_string(pattern_input);
-        let ac_toks = token_iterator(&tokens);
 
-        let total_words = ac_toks.calculate_total();
-        let b_size = ac_toks.calculate_size();
+        let total_words = calculate_total_generations(&tokens);
+        let b_size = calculate_sample_size_bytes(&tokens);
         let mb_size = b_size / 1048576;
         let gb_size = b_size / 1073741824;
         let tb_size = b_size / 1099511627776;
@@ -206,9 +197,15 @@ fn main() {
         );
         eprintln!("         sizes before mutations: {b_size} bytes / {mb_size} MB / {gb_size} GB / {tb_size} TB");
 
-        for word in ac_toks {
-            gorilla.mutate_word(word);
+
+        let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
+
+        for ac_toks in thread_iterators {
+            for word in ac_toks {
+                gorilla.run_mutations(word);
+            }
         }
+
     }
 
     if let Some(website) = &gorilla.program_args.website_input {
@@ -221,7 +218,7 @@ fn main() {
         let words = extract_words(&page_contents);
 
         for word in words {
-            gorilla.mutate_word(word)
+            gorilla.run_mutations(word)
         }
     }
 

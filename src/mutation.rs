@@ -50,7 +50,6 @@ pub struct MutationSet {
 }
 
 pub struct MutationResult {
-    pub original_word: String,
     pub mutated_words: Vec<String>,
 }
 
@@ -64,7 +63,7 @@ impl MutationResult {
 }
 
 impl MutationSet {
-    pub fn perform(&self, mutation_result: &mut MutationResult, word: &str) {
+    pub fn perform(&self, word: &str) -> MutationResult {
         let mut result: Vec<String> = vec![word.to_owned()];
 
         for mutation in &self.mutations {
@@ -75,7 +74,9 @@ impl MutationSet {
             result = new_result
         }
 
-        mutation_result.mutated_words = result
+        MutationResult {
+            mutated_words: result,
+        }
     }
 
     pub fn empty_set() -> MutationSet {

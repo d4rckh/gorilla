@@ -65,12 +65,8 @@ impl FormattingSets {
                     p_text = p_text.replace(&answer.placeholder(), &answer.answer)
                 }
 
-                let mut mutation_result = MutationResult {
-                    original_word: p_text.to_owned(),
-                    mutated_words: Vec::new(),
-                };
+                let mutation_result = part.mutations.perform(&p_text);
 
-                part.mutations.perform(&mut mutation_result, &p_text);
                 if !mutation_result.mutated_words.is_empty() {
                     final_string.push_str(&mutation_result.mutated_words[0])
                 }

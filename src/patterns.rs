@@ -61,10 +61,7 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
             } else if inside_len > 2 && cur.contains('-') {
                 let ch_start = cur.chars().next().unwrap();
                 let ch_end = cur.chars().nth(2).unwrap();
-                result.push(Token::Repeat(
-                    ch_start as u32,
-                    ch_end as u32,
-                ));
+                result.push(Token::Repeat(ch_start as u32, ch_end as u32));
             } else {
                 // Combine character sets for multi-charset tokens
                 let mut combined_charset = String::new();
@@ -102,37 +99,43 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
 pub struct TokenIter {
     pub toks: Vec<Token>,
     current_index: u128,
-    total_combinations: u128
+    end_index: u128,
+}
+
+pub fn token_iterator_from_start_end(tokens: &[Token], start: u128, end: u128) -> TokenIter {
+    TokenIter {
+        toks: tokens.to_owned(),
+        current_index: start,
+        end_index: end,
+    }
 }
 
 pub fn token_iterator(tokens: &[Token]) -> TokenIter {
     let mut iter = TokenIter {
         toks: tokens.to_owned(),
         current_index: 0,
-        total_combinations: 0
+        end_index: 0,
     };
-    iter.total_combinations = iter.calculate_total();
+    iter.end_index = calculate_total_generations(&iter.toks);
     iter
 }
 
-impl TokenIter {
-    pub fn calculate_total(&self) -> u128 {
-        self.toks.iter().fold(1, |acc, tok| {
-            acc * match tok {
-                Token::String(_) => 1,
-                Token::Repeat(start, end) => (end - start + 1) as u128,
-                Token::CharSet(chars) => chars.len() as u128,
-                Token::Numbers(start, end) => (end - start + 1) as u128,
-            }
-        })
-    }
+pub fn calculate_total_generations(tokens: &Vec<Token>) -> u128 {
+    tokens.iter().fold(1, |acc, tok| {
+        acc * match tok {
+            Token::String(_) => 1,
+            Token::Repeat(start, end) => (end - start + 1) as u128,
+            Token::CharSet(chars) => chars.len() as u128,
+            Token::Numbers(start, end) => (end - start + 1) as u128,
+        }
+    })
 }
 
 impl Iterator for TokenIter {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current_index >= self.total_combinations {
+        if self.current_index >= self.end_index {
             return None;
         }
 
@@ -140,7 +143,7 @@ impl Iterator for TokenIter {
         let mut temp_index = self.current_index;
 
         let mut indices = vec![0usize; self.toks.len()];
-        
+
         for i in (0..self.toks.len()).rev() {
             let range = self.toks.get(i).unwrap().range();
             indices[i] = (temp_index % range) as usize;
@@ -169,21 +172,19 @@ impl Iterator for TokenIter {
     }
 }
 
-impl TokenIter {
-    pub fn calculate_size(&self) -> u128 {
-        let mut sample_str = String::new();
+pub fn calculate_sample_size_bytes(tokens: &Vec<Token>) -> u128 {
+    let mut sample_str = String::new();
 
-        for tok in &self.toks {
-            match tok {
-                Token::String(s) => sample_str.push_str(s),
-                Token::Repeat(start, _) => sample_str.push(char::from_u32(*start).unwrap()),
-                Token::CharSet(ch_set) => sample_str.push(ch_set.chars().next().unwrap()),
-                Token::Numbers(start,_) => sample_str.push_str(&start.to_string()),
-            }
+    for tok in tokens {
+        match tok {
+            Token::String(s) => sample_str.push_str(s),
+            Token::Repeat(start, _) => sample_str.push(char::from_u32(*start).unwrap()),
+            Token::CharSet(ch_set) => sample_str.push(ch_set.chars().next().unwrap()),
+            Token::Numbers(start, _) => sample_str.push_str(&start.to_string()),
         }
-
-        sample_str.push('\n'); // written on disk with a new line so we add a new line
-
-        sample_str.len() as u128 * self.calculate_total()
     }
+
+    sample_str.push('\n'); // written on disk with a new line so we add a new line
+
+    sample_str.len() as u128 * calculate_total_generations(tokens)
 }

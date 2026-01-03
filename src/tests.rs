@@ -37,11 +37,6 @@ mod mutation_tests {
 
     #[test]
     fn basic_mutations() {
-        let mut mutation_result = MutationResult {
-            original_word: String::from("word"),
-            mutated_words: vec![],
-        };
-
         let mutation_set = MutationSet {
             mutations: vec![
                 Mutation {
@@ -62,18 +57,13 @@ mod mutation_tests {
             ],
         };
 
-        mutation_set.perform(&mut mutation_result, "word");
+        let mutation_result = mutation_set.perform("word");
 
         assert_eq!(mutation_result.mutated_words, vec!["abcdrowabc"])
     }
 
     #[test]
     fn advanced_mutation() {
-        let mut mutation_result = MutationResult {
-            original_word: String::from("word"),
-            mutated_words: vec![],
-        };
-
         let mutation_set = MutationSet {
             mutations: vec![Mutation {
                 action: Action::Append(String::from("{0-9}")),
@@ -82,7 +72,7 @@ mod mutation_tests {
             }],
         };
 
-        mutation_set.perform(&mut mutation_result, "word");
+        let mutation_result = mutation_set.perform("word");
 
         assert_eq!(
             mutation_result.mutated_words,
@@ -100,18 +90,13 @@ mod yaml_test {
 
     #[test]
     fn yaml_parse_test() {
-        let mut mutation_result = MutationResult {
-            original_word: String::from("word"),
-            mutated_words: vec![],
-        };
-
         let mutation_sets = get_mutation_sets(
             "name: alphabet
 mutation_sets:
   - [ wipe, \"append:{a-z}\" ] # => a, b, c, ..., z",
         );
 
-        mutation_sets[0].perform(&mut mutation_result, "word");
+        let mutation_result = mutation_sets[0].perform("word");
 
         assert_eq!(mutation_result.mutated_words.len(), 26);
     }
