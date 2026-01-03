@@ -163,6 +163,7 @@ fn main() {
         }
     }
 
+    // open file
     if let Some(file_save) = &gorilla.program_args.file_save {
         eprintln!("gorilla: using file {} as output", file_save.purple());
         gorilla.file_save = Some(
@@ -174,6 +175,7 @@ fn main() {
         )
     }
 
+    // file input
     if let Some(file_input) = &gorilla.program_args.file_input {
         eprintln!("gorilla: reading words from {}", file_input.purple());
 
