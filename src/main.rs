@@ -9,26 +9,27 @@ mod yaml_parser;
 mod threading;
 mod tests;
 
-use std::{
-    fs::{self, File, OpenOptions}, io::{self, BufRead, BufReader, Write}, sync::mpsc, time::SystemTime
-};
+use std::fs;
+use std::fs::File;
+use std::io::{self, BufRead, BufReader, Write};
+use std::sync::mpsc::Sender;
+use std::time::SystemTime;
 
 use clap::Parser;
 use colored::Colorize;
 
 use crate::{
-    arguments::ProgramArgs, csv_parser::fmt_answers_from_csv, formatting::FormatFieldAnswer, mutation::{MutationSet, parse_mutation_string}, patterns::{calculate_sample_size_bytes, calculate_total_generations, token_iterator, tokenize_format_string}, threading::distribute_token_iter_work, website_scraper::{download_page, extract_words}, yaml_parser::{get_mutation_sets, parse_formatting_yaml}
+    arguments::ProgramArgs, csv_parser::fmt_answers_from_csv, formatting::FormatFieldAnswer, mutation::{MutationSet, parse_mutation_string}, patterns::{calculate_sample_size_bytes, calculate_total_generations, tokenize_format_string}, threading::{distribute_token_iter_work}, website_scraper::{download_page, extract_words}, yaml_parser::{get_mutation_sets, parse_formatting_yaml}
 };
 
 struct Gorilla {
     program_args: ProgramArgs,
     mutation_sets: Vec<MutationSet>,
-    file_save: Option<File>,
-    mutation_counter: u32,
     word_counter: u32,
     pattern_threads: u128,
     start_time: SystemTime,
     output_separator: String,
+    sender: Option<Sender<String>>
 }
 
 impl Gorilla {
@@ -38,27 +39,8 @@ impl Gorilla {
         for mutation_set in &self.mutation_sets {
             let mutation_result = mutation_set.perform(&word);
 
-            if let Some(save_file) = &mut self.file_save {
-                mutation_result.save_to_file(save_file)
-            }
-
-            for s in &mutation_result.mutated_words {
-                self.mutation_counter += 1;
-
-                if self.file_save.is_some() {
-                    continue;
-                }
-
-                if self.program_args.timer {
-                    eprint!(
-                        "(in {:?}) ",
-                        SystemTime::now()
-                            .duration_since(self.start_time)
-                            .expect("time may have gone backwards")
-                    );
-                }
-
-                print!("{s}{}", self.output_separator)
+            for s in mutation_result.mutated_words {
+                let _ = self.sender.as_ref().unwrap().send(s);
             }
         }
     }
@@ -68,12 +50,11 @@ fn main() {
     let mut gorilla = Gorilla {
         program_args: ProgramArgs::parse(),
         mutation_sets: vec![],
-        file_save: None,
-        mutation_counter: 0,
         word_counter: 0,
         start_time: SystemTime::now(),
         output_separator: String::from('\n'),
-        pattern_threads: 1
+        pattern_threads: 1,
+        sender: None
     };
 
     if gorilla.program_args.one_line {
@@ -96,6 +77,15 @@ fn main() {
             .mutation_sets
             .append(&mut get_mutation_sets(yaml_input))
     }
+
+    let (tx, _) = threading::printer_thread(
+        gorilla.program_args.timer,
+        gorilla.start_time,
+        gorilla.output_separator.clone(),
+        gorilla.program_args.file_save.clone(),
+    );
+
+    gorilla.sender = Some(tx);
 
     if gorilla.mutation_sets.is_empty() {
         eprintln!("gorilla: (warning) missing mutation sets");
@@ -155,17 +145,7 @@ fn main() {
         }
     }
 
-    // open file
-    if let Some(file_save) = &gorilla.program_args.file_save {
-        eprintln!("gorilla: using file {} as output", file_save.purple());
-        gorilla.file_save = Some(
-            OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(file_save)
-                .expect("Could not output file"),
-        )
-    }
+
 
     // file input
     if let Some(file_input) = &gorilla.program_args.file_input {
@@ -232,10 +212,10 @@ fn main() {
         .duration_since(gorilla.start_time)
         .expect("Clock may have gone backwards");
 
-    eprintln!(
-        "gorilla: {} in {runtime_dur:?}. {} words -> {} words",
-        "finished".green().bold(),
-        gorilla.word_counter.to_string().red(),
-        gorilla.mutation_counter.to_string().green()
-    );
+    // eprintln!(
+    //     "gorilla: {} in {runtime_dur:?}. {} words -> xx words",
+    //     "finished".green().bold(),
+    //     gorilla.word_counter.to_string().red(),
+    //     //gorilla.mutation_counter.to_string().green()
+    // );
 }

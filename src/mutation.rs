@@ -53,15 +53,6 @@ pub struct MutationResult {
     pub mutated_words: Vec<String>,
 }
 
-impl MutationResult {
-    pub fn save_to_file(&self, file: &mut fs::File) {
-        for mutated in &self.mutated_words {
-            let log_entry = format!("{}\n", mutated);
-            file.write_all(log_entry.as_bytes()).expect("write failed");
-        }
-    }
-}
-
 impl MutationSet {
     pub fn perform(&self, word: &str) -> MutationResult {
         let mut result: Vec<String> = vec![word.to_owned()];
