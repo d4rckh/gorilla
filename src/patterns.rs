@@ -52,7 +52,7 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
             inside_repeat = !inside_repeat;
             let inside_len = cur.chars().collect::<Vec<char>>().len();
             if inside_len >= 4 && cur.contains('-') {
-                let start_num = cur.split('-').nth(0).unwrap();
+                let start_num = cur.split('-').next().unwrap();
                 let end_num = cur.split('-').nth(1).unwrap();
                 result.push(Token::Numbers(
                     start_num.parse::<u32>().unwrap(),

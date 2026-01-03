@@ -34,7 +34,7 @@ pub enum Action {
 pub enum MutationBuildError {
     ActionDoesNotExist,
     MissingArguments,
-    InvalidArgument(String),
+    InvalidArgument,
 }
 
 #[derive(Clone)]
@@ -229,9 +229,7 @@ impl Action {
                             '<' => Ordering::Less,
                             '=' => Ordering::Equal,
                             _ => {
-                                return Err(MutationBuildError::InvalidArgument(String::from(
-                                    "missing operator",
-                                )))
+                                return Err(MutationBuildError::InvalidArgument)
                             }
                         };
 

@@ -12,15 +12,11 @@ mod yaml_parser;
 use std::fs;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
-use std::os::windows::thread;
 use std::sync::mpsc::Sender;
-use std::thread::spawn;
 use std::time::SystemTime;
 
 use clap::Parser;
 use colored::Colorize;
-
-use rayon::prelude::*;
 
 use crate::threading::run_mutations;
 use crate::{
@@ -157,7 +153,7 @@ fn main() {
         let reader = BufReader::new(file_input);
         let words_iter = reader.lines();
 
-        for (_, l) in words_iter.enumerate() {
+        for l in words_iter {
             let line = l.unwrap();
             run_mutations(
                 &gorilla.mutation_sets,

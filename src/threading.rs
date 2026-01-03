@@ -18,7 +18,7 @@ use crate::{mutation::MutationSet, patterns::{
 pub fn distribute_token_iter_work(tokens: &Vec<Token>, threads_n: u128) -> Vec<TokenIter> {
     let mut result: Vec<TokenIter> = vec![];
 
-    let total_generations = calculate_total_generations(&tokens);
+    let total_generations = calculate_total_generations(tokens);
 
     let base = total_generations / threads_n;
     let rem = total_generations % threads_n;
