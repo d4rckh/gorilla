@@ -42,12 +42,15 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
     let mut cur = String::new();
 
     for character in input.chars() {
-        if character == '{' && !inside_repeat {
-            inside_repeat = !inside_repeat;
+        if character == '{' {
             if !cur.is_empty() {
+                if inside_repeat {
+                    result.push(Token::String("{".to_owned()));
+                }
                 result.push(Token::String(cur.clone()));
                 cur.clear();
             }
+            inside_repeat = true;
         } else if character == '}' {
             inside_repeat = !inside_repeat;
             let inside_len = cur.chars().collect::<Vec<char>>().len();
@@ -88,6 +91,10 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
         };
     }
 
+    if inside_repeat {
+        result.push(Token::String("{".to_owned()));
+    }
+    
     if !cur.is_empty() {
         result.push(Token::String(cur));
     }

@@ -177,7 +177,8 @@ fn main() {
             total_words,
             pattern_input.purple()
         );
-        eprintln!("         sizes before mutations: {b_size} bytes / {mb_size} MB / {gb_size} GB / {tb_size} TB");
+        eprintln!("         sizes before mutations: {} bytes / {} MB / {} GB / {} TB", b_size.to_string().red(), mb_size, gb_size, tb_size);
+        eprintln!("         total threads: {}", gorilla.pattern_threads.to_string().green());
 
         let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
 

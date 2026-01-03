@@ -6,7 +6,6 @@ gorilla is the ultimate wordlist tool packing a lot of amazing utilities like:
 - scrap a web page and build a wordlist from its words (like [cewl](https://github.com/digininja/CeWL))
 - extending existing wordlists using mutations (like [hashcat's rule based attack](https://hashcat.net/wiki/doku.php?id=rule_based_attack))
 
-
 ## installing with cargo
 
 With Rust's [Cargo](https://www.rust-lang.org/tools/install) installed, run `cargo install --git https://github.com/d4rckh/gorilla --branch main`
@@ -36,6 +35,8 @@ If you want to save the output to a file, you can use the `--output-file`/`-o` a
 ![image](https://user-images.githubusercontent.com/35298550/183973643-3191f7a0-7dda-4e4f-8f10-eaaa4d748874.png)
 
 Gorilla now also supports character sets. They are defined in `src/char_sets.rs`. Here are some examples of patterns that use them: `{l}` => a b c d ... z; `{u}` => A B C D ... Z; `{d}` => 1 2 3 4 ... 9; `{s}` => (space) ! " # $ ... ~ 
+
+Optionally, you can spawn multiple pattern threads using the `--pattern-threads` parameter. I recommend you set this to the maximum amount of threads you have available on your computer.
 
 ## modifying existing wordlists using mutations/rules
 
