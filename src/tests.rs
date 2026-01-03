@@ -5,7 +5,7 @@ mod token_tests {
     #[test]
     fn tokenize_string_repeat() {
         let tokens = tokenize_format_string("hello{0-9}world");
-        assert_eq!(tokens[1], Token::Repeat(48, 57, 48))
+        assert_eq!(tokens[1], Token::Repeat(48, 57))
     }
 
     #[test]

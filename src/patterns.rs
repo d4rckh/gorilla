@@ -139,8 +139,6 @@ impl Iterator for TokenIter {
         let mut result = String::new();
         let mut temp_index = self.current_index;
 
-        // We iterate backwards through tokens to handle the "carrying" logic 
-        // similar to your C `index /= range` logic.
         let mut indices = vec![0usize; self.toks.len()];
         
         for i in (0..self.toks.len()).rev() {
@@ -149,7 +147,6 @@ impl Iterator for TokenIter {
             temp_index /= range;
         }
 
-        // Now build the string based on the calculated indices
         for (i, tok) in self.toks.iter().enumerate() {
             match tok {
                 Token::String(s) => result.push_str(s),
