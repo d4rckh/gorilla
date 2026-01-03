@@ -5,7 +5,7 @@ use std::{
 
 use crate::patterns::{token_iterator, tokenize_format_string};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Action {
     Prepend(String),
     Append(String),
@@ -37,12 +37,14 @@ pub enum MutationBuildError {
     InvalidArgument(String),
 }
 
+#[derive(Clone)]
 pub struct Mutation {
     pub action: Action,
     pub times: usize,
     pub keep_original: bool,
 }
 
+#[derive(Clone)]
 pub struct MutationSet {
     pub mutations: Vec<Mutation>,
 }

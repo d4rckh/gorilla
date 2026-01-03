@@ -12,11 +12,15 @@ mod yaml_parser;
 use std::fs;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
+use std::os::windows::thread;
 use std::sync::mpsc::Sender;
+use std::thread::spawn;
 use std::time::SystemTime;
 
 use clap::Parser;
 use colored::Colorize;
+
+use rayon::prelude::*;
 
 use crate::threading::run_mutations;
 use crate::{
@@ -104,7 +108,11 @@ fn main() {
 
             for fmt_answers in answer_sets {
                 for gen_word in fmt_sets.generate_words(fmt_answers) {
-                    run_mutations(&gorilla.mutation_sets, &gen_word, gorilla.sender.clone().unwrap());
+                    run_mutations(
+                        &gorilla.mutation_sets,
+                        &gen_word,
+                        gorilla.sender.clone().unwrap(),
+                    );
                 }
             }
         } else {
@@ -132,7 +140,11 @@ fn main() {
             gorilla.start_time = SystemTime::now();
 
             for gen_word in fmt_sets.generate_words(fmt_answers) {
-                run_mutations(&gorilla.mutation_sets, &gen_word, gorilla.sender.clone().unwrap());
+                run_mutations(
+                    &gorilla.mutation_sets,
+                    &gen_word,
+                    gorilla.sender.clone().unwrap(),
+                );
             }
         }
     }
@@ -147,7 +159,11 @@ fn main() {
 
         for (_, l) in words_iter.enumerate() {
             let line = l.unwrap();
-            run_mutations(&gorilla.mutation_sets, &line, gorilla.sender.clone().unwrap());
+            run_mutations(
+                &gorilla.mutation_sets,
+                &line,
+                gorilla.sender.clone().unwrap(),
+            );
         }
     }
 
@@ -169,10 +185,24 @@ fn main() {
 
         let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
 
-        for ac_toks in thread_iterators {
-            for word in ac_toks {
-                run_mutations(&gorilla.mutation_sets, &word, gorilla.sender.clone().unwrap());
-            }
+        let mut handles = vec![];
+
+        for token_iter in thread_iterators {
+            let mutation_sets = gorilla.mutation_sets.clone();
+            let tx = gorilla.sender.clone().unwrap();
+
+            let handle = std::thread::spawn(move || {
+                // Because 'iter' is owned and 'mut', we can use it as an Iterator
+                for word in token_iter {
+                    run_mutations(&mutation_sets, &word, tx.clone());
+                }
+            });
+            handles.push(handle);
+        }
+
+        // Wait for pattern generation to finish before moving on
+        for handle in handles {
+            let _ = handle.join();
         }
     }
 
@@ -186,7 +216,11 @@ fn main() {
         let words = extract_words(&page_contents);
 
         for word in words {
-            run_mutations(&gorilla.mutation_sets, &word, gorilla.sender.clone().unwrap());
+            run_mutations(
+                &gorilla.mutation_sets,
+                &word,
+                gorilla.sender.clone().unwrap(),
+            );
         }
     }
 
