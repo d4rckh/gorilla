@@ -54,7 +54,7 @@ pub fn printer_thread(
     output_separator: String,
     file_save_path: Option<String>,
 ) -> (Sender<String>, JoinHandle<()>) {
-    let (tx, rx) = crossbeam_channel::bounded::<String>(1000);
+    let (tx, rx) = crossbeam_channel::bounded::<String>(100);
 
     let handle = thread::spawn(move || {
         let mut printer_stats = PrinterStats { saved_words: 0 };

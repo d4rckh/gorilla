@@ -17,7 +17,7 @@ use std::time::SystemTime;
 
 use clap::Parser;
 use colored::Colorize;
-use rayon::iter::{ParallelBridge, ParallelIterator};
+use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 
 use crate::threading::run_mutations;
 use crate::{
@@ -225,13 +225,13 @@ fn main() {
         let page_contents = download_page(website).unwrap();
         let words = extract_words(&page_contents);
 
-        for word in words {
+        words.par_iter().for_each(|word| {
             run_mutations(
                 &gorilla.mutation_sets,
                 &word,
                 gorilla.sender.clone().unwrap(),
             );
-        }
+        });
     }
 
     if gorilla.program_args.one_line {
