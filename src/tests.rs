@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod token_tests {
-    use crate::patterns::{token_iterator, tokenize_format_string, Token};
+    use crate::pattern::{token_iterator, tokenize_format_string, Token};
 
     #[test]
     fn tokenize_string_repeat() {
@@ -86,11 +86,11 @@ mod mutation_tests {
 
 #[cfg(test)]
 mod yaml_test {
-    use crate::yaml_parser::get_mutation_sets;
+    use crate::yaml_parser::parse_mutation_yaml;
 
     #[test]
     fn yaml_parse_test() {
-        let mutation_sets = get_mutation_sets(
+        let mutation_sets = parse_mutation_yaml(
             "name: alphabet
 mutation_sets:
   - [ wipe, \"append:{a-z}\" ] # => a, b, c, ..., z",

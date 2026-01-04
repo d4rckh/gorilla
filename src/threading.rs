@@ -9,7 +9,7 @@ use std::{
 use crossbeam_channel::Sender;
 use colored::Colorize;
 
-use crate::{mutation::MutationSet, patterns::{
+use crate::{mutation::MutationSet, pattern::{
     Token, TokenIter, calculate_total_generations, token_iterator_from_start_end
 }};
 

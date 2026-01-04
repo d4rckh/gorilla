@@ -1,9 +1,9 @@
-mod arguments;
+mod argument;
 mod char_sets;
 mod csv_parser;
 mod formatting;
 mod mutation;
-mod patterns;
+mod pattern;
 mod tests;
 mod threading;
 mod website_scraper;
@@ -21,14 +21,14 @@ use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 
 use crate::threading::run_mutations;
 use crate::{
-    arguments::ProgramArgs,
+    argument::ProgramArgs,
     csv_parser::fmt_answers_from_csv,
     formatting::FormatFieldAnswer,
     mutation::{parse_mutation_string, MutationSet},
-    patterns::{calculate_sample_size_bytes, calculate_total_generations, tokenize_format_string},
+    pattern::{calculate_sample_size_bytes, calculate_total_generations, tokenize_format_string},
     threading::distribute_token_iter_work,
     website_scraper::{download_page, extract_words},
-    yaml_parser::{get_mutation_sets, parse_formatting_yaml},
+    yaml_parser::{parse_mutation_yaml, parse_formatting_yaml},
 };
 
 struct Gorilla {
@@ -68,7 +68,7 @@ fn main() {
         let yaml_input = &fs::read_to_string(mutations_file).unwrap();
         gorilla
             .mutation_sets
-            .append(&mut get_mutation_sets(yaml_input))
+            .append(&mut parse_mutation_yaml(yaml_input))
     }
 
     let (tx, printer_handle) = threading::printer_thread(

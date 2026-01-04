@@ -8,7 +8,7 @@ use crate::{
     mutation::{parse_mutation_string, MutationSet},
 };
 
-pub fn get_mutation_sets(yaml_input: &str) -> Vec<MutationSet> {
+pub fn parse_mutation_yaml(yaml_input: &str) -> Vec<MutationSet> {
     let mut result: Vec<MutationSet> = vec![];
 
     let docs = YamlLoader::load_from_str(yaml_input).unwrap();

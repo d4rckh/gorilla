@@ -3,7 +3,7 @@ use std::{
     fmt::{self, Display},
 };
 
-use crate::patterns::{token_iterator, tokenize_format_string};
+use crate::pattern::{token_iterator, tokenize_format_string};
 
 #[derive(Debug, Clone)]
 pub enum Action {
