@@ -180,11 +180,7 @@ impl Display for Mutation {
     }
 }
 
-// pub fn build_mutation(action: Action, repeat: Option<u32>) -> mutation {
-//   mutation { action }
-// }
-
-macro_rules! check_action_args {
+macro_rules! check_action_args_length {
     ($action:expr, $requiredArgs:expr, $actualArgs:expr) => {
         if $actualArgs > ($requiredArgs - 1) {
             Ok($action)
@@ -204,20 +200,20 @@ impl Action {
 
         match action {
             "prepend" => {
-                check_action_args!(Action::Prepend(arguments[0].to_owned()), 1, argc)
+                check_action_args_length!(Action::Prepend(arguments[0].to_owned()), 1, argc)
             }
             "append" => {
-                check_action_args!(Action::Append(arguments[0].to_owned()), 1, argc)
+                check_action_args_length!(Action::Append(arguments[0].to_owned()), 1, argc)
             }
             "replace" => {
-                check_action_args!(
+                check_action_args_length!(
                     Action::Replace(arguments[0].to_owned(), arguments[1].to_owned()),
                     2,
                     argc
                 )
             }
             "if_length" => {
-                check_action_args!(
+                check_action_args_length!(
                     {
                         let arg_chrs: Vec<char> = arguments[0].chars().collect();
                         let first_chr = arg_chrs.first().unwrap();
@@ -240,7 +236,7 @@ impl Action {
                 )
             }
             "if_contains" => {
-                check_action_args!(
+                check_action_args_length!(
                     Action::IfContains(options.contains('!'), arguments[0].to_owned()),
                     1,
                     argc
@@ -270,7 +266,7 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
             // .into_iter()
             .map(|x| x.trim())
             .collect();
-        let mut mutation_action = mutation_split[0].trim();
+        let mut mutation_action = mutation_split[0];
         let mut mutation_runtimes: usize = 1;
         let mut mutation_options: &str = "";
 
