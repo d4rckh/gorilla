@@ -1,4 +1,35 @@
 #[cfg(test)]
+mod threading_tests {
+    use crate::{pattern::tokenize_format_string, threading::distribute_token_iter_work};
+
+    #[test]
+    fn token_iter_work_distribution() {
+        let tokens = tokenize_format_string("{0-9}");
+        let token_iters = distribute_token_iter_work(&tokens, 10);
+
+        for thread_i in 0..10 {
+            assert_eq!(token_iters[thread_i].current_index, thread_i as u128);
+            assert_eq!(token_iters[thread_i].end_index, (thread_i + 1) as u128);
+        }
+    }
+
+    #[test]
+    fn token_iter_work_distribution_with_remaining() {
+        let tokens = tokenize_format_string("{0-9}");
+        let token_iters = distribute_token_iter_work(&tokens, 3);
+
+
+        assert_eq!(token_iters[0].current_index, 0);
+        assert_eq!(token_iters[0].end_index, 4);
+
+        for thread_i in 1..3 {
+            assert_eq!(token_iters[thread_i].current_index, (thread_i * 3 + 1) as u128);
+            assert_eq!(token_iters[thread_i].end_index, (thread_i * 3 + 4) as u128);
+        }
+    }
+}
+
+#[cfg(test)]
 mod token_tests {
     use crate::pattern::{token_iterator, tokenize_format_string, Token};
 

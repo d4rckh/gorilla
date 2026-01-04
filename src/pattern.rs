@@ -105,8 +105,8 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
 }
 pub struct TokenIter {
     pub toks: Vec<Token>,
-    current_index: u128,
-    end_index: u128,
+    pub current_index: u128,
+    pub end_index: u128,
 }
 
 impl Display for TokenIter {
