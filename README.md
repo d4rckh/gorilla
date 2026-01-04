@@ -201,3 +201,24 @@ robert,smith
 
 ![image](https://user-images.githubusercontent.com/35298550/184476337-f8f23f7d-0902-483c-9202-6866ad9e371d.png)
 
+# all mutations available:
+
+## basic
+            
+- append:PATTERN - appends a pattern or just a text
+- prepend:PATTERN - prepends a pattern or just a text
+- replace:TEXT1:TEXT2 - replaces TEXT1 with TEXT2 
+- reverse - reverses the word
+- uppercase_all - uppercases everything
+- lowercase_all - lowercases everything
+- remove_first_letter - remove first letter
+- remove_last_letter - removes last letter
+
+## advanced
+
+- if_length:COND - wipes the word if it doesnt match the condition on word length (COND = `>NUMBER`/`<NUMBER`/`=NUMBER`)
+- if_contains:TEXT - same as above but wipes if it doesnt contain a word
+- clone - clones the word
+- wipe - removes everything from the word
+- 1st_letter - keeps everything but first letter
+- nothing - does nothing
