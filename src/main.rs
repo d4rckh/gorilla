@@ -24,11 +24,11 @@ use crate::{
     argument::ProgramArgs,
     csv_parser::fmt_answers_from_csv,
     formatting::FormatFieldAnswer,
-    mutation::{parse_mutation_string, MutationSet},
+    mutation::{MutationSet, parse_mutation_string},
     pattern::{calculate_sample_size_bytes, calculate_total_generations, tokenize_format_string},
     threading::distribute_token_iter_work,
     website_scraper::{download_page, extract_words},
-    yaml_parser::{parse_mutation_yaml, parse_formatting_yaml},
+    yaml_parser::{parse_formatting_yaml, parse_mutation_yaml},
 };
 
 struct Gorilla {

@@ -94,7 +94,7 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
     if inside_repeat {
         result.push(Token::String("{".to_owned()));
     }
-    
+
     if !cur.is_empty() {
         result.push(Token::String(cur));
     }

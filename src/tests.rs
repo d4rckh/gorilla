@@ -18,12 +18,14 @@ mod threading_tests {
         let tokens = tokenize_format_string("{0-9}");
         let token_iters = distribute_token_iter_work(&tokens, 3);
 
-
         assert_eq!(token_iters[0].current_index, 0);
         assert_eq!(token_iters[0].end_index, 4);
 
         for thread_i in 1..3 {
-            assert_eq!(token_iters[thread_i].current_index, (thread_i * 3 + 1) as u128);
+            assert_eq!(
+                token_iters[thread_i].current_index,
+                (thread_i * 3 + 1) as u128
+            );
             assert_eq!(token_iters[thread_i].end_index, (thread_i * 3 + 4) as u128);
         }
     }
@@ -31,7 +33,7 @@ mod threading_tests {
 
 #[cfg(test)]
 mod token_tests {
-    use crate::pattern::{token_iterator, tokenize_format_string, Token};
+    use crate::pattern::{Token, token_iterator, tokenize_format_string};
 
     #[test]
     fn tokenize_string_repeat() {

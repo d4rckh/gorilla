@@ -28,10 +28,7 @@ pub struct ProgramArgs {
     )]
     pub pattern_input: Option<String>,
 
-    #[clap(
-        long = "pattern-threads",
-        help = "Threads used for pattern generation",
-    )]
+    #[clap(long = "pattern-threads", help = "Threads used for pattern generation")]
     pub pattern_threads: Option<u128>,
 
     #[clap(

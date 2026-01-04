@@ -1,17 +1,18 @@
 use std::{
     fs::File,
-    io::{self, stdout, BufWriter},
+    io::{self, BufWriter, stdout},
     thread::{self, JoinHandle},
     time::SystemTime,
     vec,
 };
 
-use crossbeam_channel::Sender;
 use colored::Colorize;
+use crossbeam_channel::Sender;
 
-use crate::{mutation::MutationSet, pattern::{
-    Token, TokenIter, calculate_total_generations, token_iterator_from_start_end
-}};
+use crate::{
+    mutation::MutationSet,
+    pattern::{Token, TokenIter, calculate_total_generations, token_iterator_from_start_end},
+};
 
 pub fn distribute_token_iter_work(tokens: &[Token], threads_n: u128) -> Vec<TokenIter> {
     let mut result: Vec<TokenIter> = vec![];

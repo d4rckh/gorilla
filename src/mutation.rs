@@ -53,8 +53,6 @@ pub struct MutationResult {
     pub mutated_words: Vec<String>,
 }
 
-
-
 impl MutationSet {
     pub fn perform(&self, word: &str) -> MutationResult {
         let mut result: Vec<String> = vec![word.to_owned()];
@@ -228,9 +226,7 @@ impl Action {
                             '>' => Ordering::Greater,
                             '<' => Ordering::Less,
                             '=' => Ordering::Equal,
-                            _ => {
-                                return Err(MutationBuildError::InvalidArgument)
-                            }
+                            _ => return Err(MutationBuildError::InvalidArgument),
                         };
 
                         let mut number_chrs = arguments[0].chars();

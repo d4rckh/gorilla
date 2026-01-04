@@ -1,4 +1,4 @@
-use crate::mutation::{MutationSet};
+use crate::mutation::MutationSet;
 
 pub struct FormatPart {
     pub text: String,
