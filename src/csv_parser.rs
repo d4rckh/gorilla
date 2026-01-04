@@ -19,13 +19,11 @@ pub fn fmt_answers_from_csv(csv_path: &str) -> Vec<Vec<FormatFieldAnswer>> {
         let row = result.unwrap();
 
         let mut row_answers: Vec<FormatFieldAnswer> = Vec::new();
-        let mut column_no = 0;
 
-        for answer in row.iter() {
-            let name = headers[column_no].to_owned();
+        for (answer_no, answer) in row.iter().enumerate() {
+            let name = headers[answer_no].to_owned();
             let answer = answer.to_owned();
             row_answers.push(FormatFieldAnswer { name, answer });
-            column_no += 1
         }
 
         answers.push(row_answers);

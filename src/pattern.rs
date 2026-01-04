@@ -133,7 +133,7 @@ pub fn token_iterator(tokens: &[Token]) -> TokenIter {
     iter
 }
 
-pub fn calculate_total_generations(tokens: &Vec<Token>) -> u128 {
+pub fn calculate_total_generations(tokens: &[Token]) -> u128 {
     tokens.iter().fold(1, |acc, tok| {
         acc * match tok {
             Token::String(_) => 1,

@@ -13,7 +13,7 @@ use crate::{mutation::MutationSet, pattern::{
     Token, TokenIter, calculate_total_generations, token_iterator_from_start_end
 }};
 
-pub fn distribute_token_iter_work(tokens: &Vec<Token>, threads_n: u128) -> Vec<TokenIter> {
+pub fn distribute_token_iter_work(tokens: &[Token], threads_n: u128) -> Vec<TokenIter> {
     let mut result: Vec<TokenIter> = vec![];
 
     let total_generations = calculate_total_generations(tokens);
@@ -38,7 +38,7 @@ pub struct PrinterStats {
     saved_words: u128,
 }
 
-pub fn run_mutations(sets: &Vec<MutationSet>, word: &String, sender: Sender<String>) {
+pub fn run_mutations(sets: &Vec<MutationSet>, word: &str, sender: Sender<String>) {
     for mutation_set in sets {
         let mutation_result = mutation_set.perform(word);
 

@@ -110,7 +110,7 @@ fn main() {
                     .for_each(|gen_word| {
                         run_mutations(
                             &gorilla.mutation_sets,
-                            &gen_word,
+                            gen_word,
                             gorilla.sender.clone().unwrap(),
                         );
                     })
@@ -145,7 +145,7 @@ fn main() {
                 .for_each(|gen_word| {
                     run_mutations(
                         &gorilla.mutation_sets,
-                        &gen_word,
+                        gen_word,
                         gorilla.sender.clone().unwrap(),
                     );
                 });
@@ -230,7 +230,7 @@ fn main() {
         words.par_iter().for_each(|word| {
             run_mutations(
                 &gorilla.mutation_sets,
-                &word,
+                word,
                 gorilla.sender.clone().unwrap(),
             );
         });
