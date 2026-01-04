@@ -204,7 +204,7 @@ robert,smith
 # all mutations available:
 
 ## basic
-            
+
 - append:PATTERN - appends a pattern or just a text
 - prepend:PATTERN - prepends a pattern or just a text
 - replace:TEXT1:TEXT2 - replaces TEXT1 with TEXT2 

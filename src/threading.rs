@@ -1,14 +1,12 @@
 use std::{
     fs::File,
     io::{self, stdout, BufWriter},
-    sync::{
-        mpsc::{self, Sender},
-    },
     thread::{self, JoinHandle},
     time::SystemTime,
     vec,
 };
 
+use crossbeam_channel::Sender;
 use colored::Colorize;
 
 use crate::{mutation::MutationSet, patterns::{
@@ -56,7 +54,7 @@ pub fn printer_thread(
     output_separator: String,
     file_save_path: Option<String>,
 ) -> (Sender<String>, JoinHandle<()>) {
-    let (tx, rx) = mpsc::channel::<String>();
+    let (tx, rx) = crossbeam_channel::bounded::<String>(1000);
 
     let handle = thread::spawn(move || {
         let mut printer_stats = PrinterStats { saved_words: 0 };

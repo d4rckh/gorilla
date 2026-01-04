@@ -12,11 +12,12 @@ mod yaml_parser;
 use std::fs;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
-use std::sync::mpsc::Sender;
+use crossbeam_channel::Sender;
 use std::time::SystemTime;
 
 use clap::Parser;
 use colored::Colorize;
+use rayon::iter::{ParallelBridge, ParallelIterator};
 
 use crate::threading::run_mutations;
 use crate::{
@@ -151,16 +152,18 @@ fn main() {
 
         let file_input = File::open(file_input).unwrap();
         let reader = BufReader::new(file_input);
-        let words_iter = reader.lines();
 
-        for l in words_iter {
-            let line = l.unwrap();
-            run_mutations(
-                &gorilla.mutation_sets,
-                &line,
-                gorilla.sender.clone().unwrap(),
-            );
-        }
+        reader
+            .lines()
+            .map_while(Result::ok)
+            .par_bridge()
+            .for_each(|l| {
+                run_mutations(
+                    &gorilla.mutation_sets,
+                    &l,
+                    gorilla.sender.clone().unwrap(),
+                );
+            });
     }
 
     if let Some(pattern_input) = &gorilla.program_args.pattern_input {
@@ -177,8 +180,17 @@ fn main() {
             total_words,
             pattern_input.purple()
         );
-        eprintln!("         sizes before mutations: {} bytes / {} MB / {} GB / {} TB", b_size.to_string().red(), mb_size, gb_size, tb_size);
-        eprintln!("         total threads: {}", gorilla.pattern_threads.to_string().green());
+        eprintln!(
+            "         sizes before mutations: {} bytes / {} MB / {} GB / {} TB",
+            b_size.to_string().red(),
+            mb_size,
+            gb_size,
+            tb_size
+        );
+        eprintln!(
+            "         total threads: {}",
+            gorilla.pattern_threads.to_string().green()
+        );
 
         let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
 
