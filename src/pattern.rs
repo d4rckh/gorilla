@@ -112,7 +112,13 @@ pub struct TokenIter {
 
 impl Display for TokenIter {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "token_iter[{} tokens, {} -> {}]", self.toks.len(),self.current_index, self.end_index)
+        write!(
+            f,
+            "token_iter[{} tokens, {} -> {}]",
+            self.toks.len(),
+            self.current_index,
+            self.end_index
+        )
     }
 }
 
