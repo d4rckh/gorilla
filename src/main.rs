@@ -9,10 +9,10 @@ mod threading;
 mod website_scraper;
 mod yaml_parser;
 
+use crossbeam_channel::Sender;
 use std::fs;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
-use crossbeam_channel::Sender;
 use std::time::SystemTime;
 
 use clap::Parser;
@@ -104,13 +104,16 @@ fn main() {
             fmt_sets.check_answer_names(answer_sets.first().unwrap());
 
             for fmt_answers in answer_sets {
-                for gen_word in fmt_sets.generate_words(fmt_answers) {
-                    run_mutations(
-                        &gorilla.mutation_sets,
-                        &gen_word,
-                        gorilla.sender.clone().unwrap(),
-                    );
-                }
+                fmt_sets
+                    .generate_words(fmt_answers)
+                    .par_iter()
+                    .for_each(|gen_word| {
+                        run_mutations(
+                            &gorilla.mutation_sets,
+                            &gen_word,
+                            gorilla.sender.clone().unwrap(),
+                        );
+                    })
             }
         } else {
             let mut fmt_answers: Vec<FormatFieldAnswer> = Vec::new();
@@ -136,13 +139,16 @@ fn main() {
             // answer the questions
             gorilla.start_time = SystemTime::now();
 
-            for gen_word in fmt_sets.generate_words(fmt_answers) {
-                run_mutations(
-                    &gorilla.mutation_sets,
-                    &gen_word,
-                    gorilla.sender.clone().unwrap(),
-                );
-            }
+            fmt_sets
+                .generate_words(fmt_answers)
+                .par_iter()
+                .for_each(|gen_word| {
+                    run_mutations(
+                        &gorilla.mutation_sets,
+                        &gen_word,
+                        gorilla.sender.clone().unwrap(),
+                    );
+                });
         }
     }
 
@@ -158,11 +164,7 @@ fn main() {
             .map_while(Result::ok)
             .par_bridge()
             .for_each(|l| {
-                run_mutations(
-                    &gorilla.mutation_sets,
-                    &l,
-                    gorilla.sender.clone().unwrap(),
-                );
+                run_mutations(&gorilla.mutation_sets, &l, gorilla.sender.clone().unwrap());
             });
     }
 
