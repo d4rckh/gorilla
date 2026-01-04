@@ -188,8 +188,9 @@ fn main() {
             tb_size
         );
         eprintln!(
-            "         total threads: {}",
-            gorilla.pattern_threads.to_string().green()
+            "         --pattern-threads {} {}",
+            gorilla.pattern_threads.to_string().green(),
+            "(total pattern threads)".to_string().dimmed()
         );
 
         let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
