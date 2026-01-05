@@ -1,5 +1,5 @@
 use std::{
-    fmt::{self, Display},
+    fmt::{self, Display, format},
     vec,
 };
 
@@ -43,16 +43,21 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
 
     for character in input.chars() {
         if character == '{' {
+            if inside_repeat {
+                result.push(Token::String("{".to_owned()));
+            }
             if !cur.is_empty() {
-                if inside_repeat {
-                    result.push(Token::String("{".to_owned()));
-                }
                 result.push(Token::String(cur.clone()));
                 cur.clear();
             }
             inside_repeat = true;
         } else if character == '}' {
-            inside_repeat = !inside_repeat;
+            if !inside_repeat { 
+                cur.push('}');
+                continue;
+            }
+            let mut valid = false;
+            inside_repeat = false;
             let inside_len = cur.chars().collect::<Vec<char>>().len();
             if inside_len >= 4 && cur.contains('-') {
                 let start_num = cur.split('-').next().unwrap();
@@ -60,11 +65,13 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
                 result.push(Token::CharRange(
                     start_num.parse::<u32>().unwrap(),
                     end_num.parse::<u32>().unwrap(),
-                ))
+                ));
+                valid = true;
             } else if inside_len > 2 && cur.contains('-') {
                 let ch_start = cur.chars().next().unwrap();
                 let ch_end = cur.chars().nth(2).unwrap();
                 result.push(Token::Repeat(ch_start as u32, ch_end as u32));
+                valid = true;
             } else {
                 // Combine character sets for multi-charset tokens
                 let mut combined_charset = String::new();
@@ -80,10 +87,11 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
 
                 if !combined_charset.is_empty() {
                     result.push(Token::CharSet(combined_charset));
-                } else if !cur.is_empty() {
-                    // Fallback if no valid charsets found
-                    result.push(Token::String(cur.clone()));
+                    valid = true;
                 }
+            }
+            if !valid { 
+                result.push(Token::String(format!("{{{}}}", cur)));
             }
             cur.clear();
         } else {
@@ -106,6 +114,7 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
 
 pub struct TokenIter {
     pub toks: Vec<Token>,
+    indices: Vec<usize>,
     pub current_index: u128,
     pub end_index: u128,
 }
@@ -127,6 +136,7 @@ pub fn token_iterator_from_start_end(tokens: &[Token], start: u128, end: u128) -
         toks: tokens.to_owned(),
         current_index: start,
         end_index: end,
+        indices: vec![0usize; tokens.len()]
     }
 }
 
@@ -135,6 +145,7 @@ pub fn token_iterator(tokens: &[Token]) -> TokenIter {
         toks: tokens.to_owned(),
         current_index: 0,
         end_index: 0,
+        indices: vec![0usize; tokens.len()]
     };
     iter.end_index = calculate_total_generations(&iter.toks);
     iter
@@ -162,11 +173,10 @@ impl Iterator for TokenIter {
         let mut result = String::new();
         let mut temp_index = self.current_index;
 
-        let mut indices = vec![0usize; self.toks.len()];
-
+        // rebuild self.indices
         for i in (0..self.toks.len()).rev() {
             let range = self.toks.get(i).unwrap().range();
-            indices[i] = (temp_index % range) as usize;
+            self.indices[i] = (temp_index % range) as usize;
             temp_index /= range;
         }
 
@@ -174,15 +184,15 @@ impl Iterator for TokenIter {
             match tok {
                 Token::String(s) => result.push_str(s),
                 Token::Repeat(start, _) => {
-                    let c = char::from_u32(start + indices[i] as u32).unwrap();
+                    let c = char::from_u32(start + self.indices[i] as u32).unwrap();
                     result.push(c);
                 }
                 Token::CharSet(chars) => {
-                    let c = chars.chars().nth(indices[i]).unwrap();
+                    let c = chars.chars().nth(self.indices[i]).unwrap();
                     result.push(c);
                 }
                 Token::CharRange(start, _) => {
-                    result.push_str(&(start + indices[i] as u32).to_string());
+                    result.push_str(&(start + self.indices[i] as u32).to_string());
                 }
             }
         }

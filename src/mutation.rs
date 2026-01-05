@@ -24,7 +24,7 @@ pub enum Action {
     Remove,
     Nothing,
 
-    // conditional, same effect as wipe if conditions are not met
+    // conditional, same effect as remove if conditions are not met
     // bool indicates if the condition should be negated
     IfCharacterLength(bool, Ordering, usize),
     IfContains(bool, String),
@@ -54,6 +54,10 @@ pub struct MutationResult {
 }
 
 impl MutationSet {
+    pub fn test_size(&self) -> usize {
+        self.perform("").mutated_words.len()
+    }
+
     pub fn perform(&self, word: &str) -> MutationResult {
         let mut result: Vec<String> = vec![word.to_owned()];
 

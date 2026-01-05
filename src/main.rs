@@ -90,6 +90,7 @@ fn main() {
             for mutation in &mutation_set.mutations {
                 eprint!(" -> {}", mutation.to_string().blue());
             }
+            eprint!(" -> {} {}", format!("x{}", &mutation_set.test_size().to_string()).green(), "words".dimmed());
             eprintln!()
         }
     }
