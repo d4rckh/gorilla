@@ -190,7 +190,9 @@ If you run the set, you will be prompted for each field and the usernames will b
 
 ![image](https://user-images.githubusercontent.com/35298550/184354813-fd008441-3188-4ef6-98b0-9e4573956d8c.png)
 
-(of course, you can use the other arguments normally, like `--mutations-file`/`-f` to generate new words via mutations or `--output-file`/`-o` to save the words)
+> note: don't make the mutations inside formatting sets too complex, they will all run single threaded! Mix the formatting file with a mutation file to run parallel mutations. Do not use combinatorical patterns inside formatting sets' mutation sets. 
+
+> tip: you can use the other arguments normally, like `--mutations-file`/`-f` to generate new words via mutations or `--output-file`/`-o` to save the words
 
 Each formatting set is an array of strings that are later appended. So `["{f_name}", "{l_name}"]` is equivalent to `["{f_name}{l_name}"]`. Instead of a string, you can supply an array, this allows you to apply mutations that you have used before to extend wordlists.
 
@@ -198,7 +200,7 @@ Each formatting set is an array of strings that are later appended. So `["{f_nam
 - [ "{f_name}_", [ "{l_name}", [ reverse ] ] ]
 ```
 
-If the `f_name` is `joe` and `l_name` is `doe`, the resulting formatting will generate `joe_eod`. Mutations useful in formatting sets are `remove_last_letter`, `remove_first_letter` and `1st_letter`
+If the `f_name` is `joe` and `l_name` is `doe`, the resulting formatting will generate `joe_eod`. Mutations useful in formatting sets are `remove_last_letter`, `remove_first_letter` and `1st_letter`.
 
 If you want to apply a formatting sets to many user profiles, you can use the `--with-csv`/`-c` argument to supply a CSV file. For the `basic_usernames` formatting set, the CSV should be formatted like this:
 
