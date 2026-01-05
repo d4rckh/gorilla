@@ -38,13 +38,41 @@ mod token_tests {
     #[test]
     fn tokenize_string_repeat() {
         let tokens = tokenize_format_string("hello{0-9}world");
-        assert_eq!(tokens[1], Token::Repeat(48, 57))
+        assert_eq!(tokens[1], Token::Repeat('0' as u32, '9' as u32))
     }
 
     #[test]
     fn tokenize_string_string() {
         let tokens = tokenize_format_string("hello{0-9}world");
         assert_eq!(tokens[2], Token::String(String::from("world")))
+    }
+
+    #[test]
+    fn properly_tokenize_double_brackets() {
+        let tokens = tokenize_format_string("{{0-9}}");
+
+        for token in tokens.iter() {
+            println!("{}", token.to_string());
+        }
+
+        assert_eq!(tokens.len(), 3);
+
+        assert_eq!(tokens[0], Token::String("{".to_string()));
+        assert_eq!(tokens[2], Token::String("}".to_string()))
+    }
+
+    #[test]
+    fn properly_tokenize_double_brackets_2() {
+        let tokens = tokenize_format_string("{{{}}{0-9}}{}}}");
+
+        for token in tokens.iter() {
+            println!("{}", token.to_string());
+        }
+
+        assert_eq!(tokens.len(), 3);
+
+        assert_eq!(tokens[0], Token::String("{{{}}".to_string()));
+        assert_eq!(tokens[2], Token::String("}{}}}".to_string()))
     }
 
     #[test]

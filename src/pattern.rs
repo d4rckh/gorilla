@@ -37,27 +37,31 @@ impl Display for Token {
 
 pub fn tokenize_format_string(input: &str) -> Vec<Token> {
     let mut result: Vec<Token> = vec![];
-    let mut inside_repeat = false;
+    let mut inside_brackets = false;
 
     let mut cur = String::new();
 
     for character in input.chars() {
         if character == '{' {
-            if inside_repeat {
-                result.push(Token::String("{".to_owned()));
+            if inside_brackets {
+                cur.push('{');
             }
             if !cur.is_empty() {
-                result.push(Token::String(cur.clone()));
+                if let Some(Token::String(s)) = result.last_mut() {
+                    s.push_str(&cur);
+                } else {
+                    result.push(Token::String(cur.clone()));
+                }
                 cur.clear();
             }
-            inside_repeat = true;
+            inside_brackets = true;
         } else if character == '}' {
-            if !inside_repeat { 
+            if !inside_brackets {
                 cur.push('}');
                 continue;
             }
             let mut valid = false;
-            inside_repeat = false;
+            inside_brackets = false;
             let inside_len = cur.chars().collect::<Vec<char>>().len();
             if inside_len >= 4 && cur.contains('-') {
                 let start_num = cur.split('-').next().unwrap();
@@ -90,8 +94,13 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
                     valid = true;
                 }
             }
-            if !valid { 
-                result.push(Token::String(format!("{{{}}}", cur)));
+
+            if !valid {
+                if let Some(Token::String(s)) = result.last_mut() {
+                    s.push_str(&format!("{{{}}}", cur));
+                } else {
+                    result.push(Token::String(format!("{{{}}}", cur)));
+                }
             }
             cur.clear();
         } else {
@@ -99,11 +108,13 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
         };
     }
 
-    if inside_repeat {
-        result.push(Token::String("{".to_owned()));
+    if inside_brackets {
+        cur.push('{');
     }
 
-    if !cur.is_empty() {
+    if let Some(Token::String(s)) = result.last_mut() {
+        s.push_str(&cur);
+    } else {
         result.push(Token::String(cur));
     }
 
@@ -136,7 +147,7 @@ pub fn token_iterator_from_start_end(tokens: &[Token], start: u128, end: u128) -
         toks: tokens.to_owned(),
         current_index: start,
         end_index: end,
-        indices: vec![0usize; tokens.len()]
+        indices: vec![0usize; tokens.len()],
     }
 }
 
@@ -145,7 +156,7 @@ pub fn token_iterator(tokens: &[Token]) -> TokenIter {
         toks: tokens.to_owned(),
         current_index: 0,
         end_index: 0,
-        indices: vec![0usize; tokens.len()]
+        indices: vec![0usize; tokens.len()],
     };
     iter.end_index = calculate_total_generations(&iter.toks);
     iter
