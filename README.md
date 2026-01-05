@@ -34,7 +34,17 @@ If you want to save the output to a file, you can use the `--output-file`/`-o` a
 
 ![image](https://user-images.githubusercontent.com/35298550/183973643-3191f7a0-7dda-4e4f-8f10-eaaa4d748874.png)
 
-Gorilla now also supports character sets. They are defined in `src/char_sets.rs`. Here are some examples of patterns that use them: `{l}` => a b c d ... z; `{u}` => A B C D ... Z; `{d}` => 1 2 3 4 ... 9; `{s}` => (space) ! " # $ ... ~ 
+Gorilla now also supports character sets. They are defined in `src/char_sets.rs`. Here are some examples of patterns that use them: `{l}` => a b c d ... z; `{u}` => A B C D ... Z; `{d}` => 1 2 3 4 ... 9; `{s}` => (space) ! " # $ ... ~. You can combine multiple of them, so `{luds}` would result in a char set containing all other char sets described ([#45](https://github.com/andreiverse/gorilla/pull/45)). 
+
+If you use a range and each end has 1 character, you will be doing a character range. For example: 
+- `{a-z}` will result in adding each character of the alphabet, one at a time: a, b, c, d, e, f, g,...., x, y and z;
+- `{a-c}` will result in adding only a, b and c, one at a time;
+- `{0-9}` will result in adding only 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, only one at a time. 
+If you use a range and one of the ends have more than 1 characters, each end will be parsed as a unsigned 32 bit number and result a number range instead. For example:
+- `{2020-2026}` will result in adding 2020, 2021, 2022, 2023, 2024, 2025 and 2026, one at a time.
+- `{1-100}` will result in adding numbers from 1 to 100 (inclusive), one at a time.
+
+> Experimental: If the inside of your brackets contains a comma, the string will be split by it and add each part, one at a time, for example {Jan,Feb,Mar} will result in adding Jan, Feb and Mar, one at a time.
 
 Optionally, you can spawn multiple pattern threads using the `--pattern-threads` parameter. I recommend you set this to the maximum amount of threads you have available on your computer.
 

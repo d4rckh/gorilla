@@ -38,7 +38,7 @@ mod token_tests {
     #[test]
     fn tokenize_string_repeat() {
         let tokens = tokenize_format_string("hello{0-9}world");
-        assert_eq!(tokens[1], Token::Repeat('0' as u32, '9' as u32))
+        assert_eq!(tokens[1], Token::NumRange('0' as u32, '9' as u32))
     }
 
     #[test]

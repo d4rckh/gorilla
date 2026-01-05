@@ -1,5 +1,5 @@
 use std::{
-    fmt::{self, Display, format},
+    fmt::{self, Display},
     vec,
 };
 
@@ -8,18 +8,20 @@ use crate::char_sets;
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     String(String),
-    Repeat(u32, u32),
+    NumRange(u32, u32),
     CharSet(String),
     CharRange(u32, u32),
+    Strings(Vec<String>),
 }
 
 impl Token {
     fn range(&self) -> u128 {
         match &self {
             Token::String(_) => 1,
-            Token::Repeat(start, end) => (end - start + 1) as u128,
+            Token::NumRange(start, end) => (end - start + 1) as u128,
             Token::CharSet(chars) => chars.len() as u128,
             Token::CharRange(start, end) => (end - start + 1) as u128,
+            Token::Strings(strings) => strings.len() as u128,
         }
     }
 }
@@ -28,11 +30,53 @@ impl Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Token::String(s) => write!(f, "string: {}", s),
-            Token::Repeat(start, end) => write!(f, "repeat: {} -> {}", start, end),
+            Token::NumRange(start, end) => write!(f, "num_range: {} -> {}", start, end),
             Token::CharSet(ch_set) => write!(f, "char_set: {}", ch_set),
             Token::CharRange(start, end) => write!(f, "char_range: {} -> {}", start, end),
+            Token::Strings(strings) => write!(f, "strings: {}", strings.join(" / ")),
         }
     }
+}
+
+fn parse_inner_brackets(cur: &str) -> Option<Token> {
+    let inside_len = cur.chars().collect::<Vec<char>>().len();
+
+    if cur.contains(',') {
+        return Some(Token::Strings(
+            cur.split(",").map(|x| x.trim().to_owned()).collect(),
+        ));
+    } else if inside_len >= 4 && cur.contains('-') {
+        let start_num = cur.split('-').next().unwrap();
+        let end_num = cur.split('-').nth(1).unwrap();
+
+        return Some(Token::CharRange(
+            start_num.parse::<u32>().unwrap(),
+            end_num.parse::<u32>().unwrap(),
+        ));
+    } else if inside_len > 2 && cur.contains('-') {
+        let ch_start = cur.chars().next().unwrap();
+        let ch_end = cur.chars().nth(2).unwrap();
+
+        return Some(Token::NumRange(ch_start as u32, ch_end as u32));
+    } else {
+        // Combine character sets for multi-charset tokens
+        let mut combined_charset = String::new();
+        for ch in cur.chars() {
+            match ch {
+                'l' => combined_charset.push_str(char_sets::L_CH),
+                'u' => combined_charset.push_str(char_sets::U_CH),
+                'd' => combined_charset.push_str(char_sets::D_CH),
+                's' => combined_charset.push_str(char_sets::S_CH),
+                _ => {} // Ignore unsupported characters
+            }
+        }
+
+        if !combined_charset.is_empty() {
+            return Some(Token::CharSet(combined_charset));
+        }
+    }
+
+    None
 }
 
 pub fn tokenize_format_string(input: &str) -> Vec<Token> {
@@ -60,47 +104,17 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
                 cur.push('}');
                 continue;
             }
-            let mut valid = false;
+
             inside_brackets = false;
-            let inside_len = cur.chars().collect::<Vec<char>>().len();
-            if inside_len >= 4 && cur.contains('-') {
-                let start_num = cur.split('-').next().unwrap();
-                let end_num = cur.split('-').nth(1).unwrap();
-                result.push(Token::CharRange(
-                    start_num.parse::<u32>().unwrap(),
-                    end_num.parse::<u32>().unwrap(),
-                ));
-                valid = true;
-            } else if inside_len > 2 && cur.contains('-') {
-                let ch_start = cur.chars().next().unwrap();
-                let ch_end = cur.chars().nth(2).unwrap();
-                result.push(Token::Repeat(ch_start as u32, ch_end as u32));
-                valid = true;
+
+            // if the contains for the brackets aren't valid we will just consider
+            // the contents including the brackets to be a string
+            if let Some(token) = parse_inner_brackets(&cur) {
+                result.push(token);
+            } else if let Some(Token::String(s)) = result.last_mut() {
+                s.push_str(&format!("{{{}}}", cur));
             } else {
-                // Combine character sets for multi-charset tokens
-                let mut combined_charset = String::new();
-                for ch in cur.chars() {
-                    match ch {
-                        'l' => combined_charset.push_str(char_sets::L_CH),
-                        'u' => combined_charset.push_str(char_sets::U_CH),
-                        'd' => combined_charset.push_str(char_sets::D_CH),
-                        's' => combined_charset.push_str(char_sets::S_CH),
-                        _ => {} // Ignore unsupported characters
-                    }
-                }
-
-                if !combined_charset.is_empty() {
-                    result.push(Token::CharSet(combined_charset));
-                    valid = true;
-                }
-            }
-
-            if !valid {
-                if let Some(Token::String(s)) = result.last_mut() {
-                    s.push_str(&format!("{{{}}}", cur));
-                } else {
-                    result.push(Token::String(format!("{{{}}}", cur)));
-                }
+                result.push(Token::String(format!("{{{}}}", cur)));
             }
             cur.clear();
         } else {
@@ -163,14 +177,7 @@ pub fn token_iterator(tokens: &[Token]) -> TokenIter {
 }
 
 pub fn calculate_total_generations(tokens: &[Token]) -> u128 {
-    tokens.iter().fold(1, |acc, tok| {
-        acc * match tok {
-            Token::String(_) => 1,
-            Token::Repeat(start, end) => (end - start + 1) as u128,
-            Token::CharSet(chars) => chars.len() as u128,
-            Token::CharRange(start, end) => (end - start + 1) as u128,
-        }
-    })
+    tokens.iter().fold(1, |acc, tok| acc * tok.range())
 }
 
 impl Iterator for TokenIter {
@@ -194,7 +201,7 @@ impl Iterator for TokenIter {
         for (i, tok) in self.toks.iter().enumerate() {
             match tok {
                 Token::String(s) => result.push_str(s),
-                Token::Repeat(start, _) => {
+                Token::NumRange(start, _) => {
                     let c = char::from_u32(start + self.indices[i] as u32).unwrap();
                     result.push(c);
                 }
@@ -204,6 +211,9 @@ impl Iterator for TokenIter {
                 }
                 Token::CharRange(start, _) => {
                     result.push_str(&(start + self.indices[i] as u32).to_string());
+                }
+                Token::Strings(strings) => {
+                    result.push_str(strings.get(self.indices[i]).unwrap());
                 }
             }
         }
@@ -219,9 +229,16 @@ pub fn calculate_sample_size_bytes(tokens: &Vec<Token>) -> u128 {
     for tok in tokens {
         match tok {
             Token::String(s) => sample_str.push_str(s),
-            Token::Repeat(start, _) => sample_str.push(char::from_u32(*start).unwrap()),
+            Token::NumRange(start, end) => {
+                sample_str.push(char::from_u32((start + end) / 2).unwrap())
+            }
             Token::CharSet(ch_set) => sample_str.push(ch_set.chars().next().unwrap()),
             Token::CharRange(start, _) => sample_str.push_str(&start.to_string()),
+            Token::Strings(strings) => {
+                for _ in 0..(strings.iter().fold(0usize, |p, c| p + c.len()) / strings.len()) {
+                    sample_str.push('X');
+                }
+            }
         }
     }
 
