@@ -1,8 +1,13 @@
 [package]
-author = "andreiverse"
 name = "gorilla"
 version = "1.5.0"
 edition = "2024"
+authors = ["andreiverse"]
+description = "Ultimate wordlist generation tool with pattern, mutation, and scraping capabilities"
+repository = "https://github.com/d4rckh/gorilla"
+license = "GPL-3.0"
+keywords = ["wordlist", "security", "password", "pentesting"]
+categories = ["command-line-utilities"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

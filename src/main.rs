@@ -2,6 +2,7 @@ mod argument;
 mod char_sets;
 mod csv_parser;
 mod formatting;
+mod logging;
 mod mutation;
 mod pattern;
 mod tests;
@@ -81,10 +82,10 @@ fn main() {
     gorilla.sender = Some(tx);
 
     if gorilla.mutation_sets.is_empty() {
-        eprintln!("gorilla: (warning) missing mutation sets");
+        logging::warning("missing mutation sets");
         gorilla.mutation_sets.push(MutationSet::empty_set())
     } else {
-        eprintln!("gorilla: mutation sets summary");
+        logging::info("mutation sets summary");
         for mutation_set in &gorilla.mutation_sets {
             eprint!(" {}", "word".dimmed());
             for mutation in &mutation_set.mutations {
@@ -159,7 +160,7 @@ fn main() {
 
     // file input
     if let Some(file_input) = &gorilla.program_args.file_input {
-        eprintln!("gorilla: reading words from {}", file_input.purple());
+        logging::info(&format!("reading words from {}", file_input.purple()));
 
         let file_input = File::open(file_input).unwrap();
         let reader = BufReader::new(file_input);
@@ -182,23 +183,23 @@ fn main() {
         let gb_size = b_size / 1073741824;
         let tb_size = b_size / 1099511627776;
 
-        eprintln!(
-            "gorilla: will generate {} words from a pattern {}",
+        logging::info(&format!(
+            "will generate {} words from a pattern {}",
             total_words,
             pattern_input.purple()
-        );
-        eprintln!(
+        ));
+        logging::info(&format!(
             "         sizes before mutations: {} bytes / {} MB / {} GB / {} TB",
             b_size.to_string().red(),
             mb_size,
             gb_size,
             tb_size
-        );
-        eprintln!(
+        ));
+        logging::info(&format!(
             "         --pattern-threads {} {}",
             gorilla.pattern_threads.to_string().green(),
             "(total pattern threads)".to_string().dimmed()
-        );
+        ));
 
         let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
 
@@ -224,10 +225,10 @@ fn main() {
     }
 
     if let Some(website) = &gorilla.program_args.website_input {
-        eprintln!(
-            "gorilla: scraping words from a website {}",
+        logging::info(&format!(
+            "scraping words from a website {}",
             website.purple()
-        );
+        ));
 
         let page_contents = download_page(website).unwrap();
         let words = extract_words(&page_contents);

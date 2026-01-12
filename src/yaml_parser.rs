@@ -15,10 +15,10 @@ pub fn parse_mutation_yaml(yaml_input: &str) -> Vec<MutationSet> {
 
     let doc = &docs[0];
 
-    eprintln!(
-        "gorilla: loading {} yaml mutations",
+    crate::logging::info(&format!(
+        "loading {} yaml mutations",
         doc["name"].as_str().unwrap().purple()
-    );
+    ));
 
     for mutation_set in doc["mutation_sets"].as_vec().unwrap() {
         let mut mutation_strings: Vec<String> = vec![];
@@ -40,10 +40,10 @@ pub fn parse_formatting_yaml(yaml_input: &str) -> FormattingSets {
     let doc = &docs[0];
     let formatting_name = doc["name"].as_str().unwrap();
 
-    eprintln!(
-        "gorilla: loading {} formatting sets",
+    crate::logging::info(&format!(
+        "loading {} formatting sets",
         formatting_name.purple()
-    );
+    ));
 
     let mut format_sets: Vec<FormatSet> = Vec::new();
     let mut format_fields: Vec<FormatField> = Vec::new();

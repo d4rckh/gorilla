@@ -296,10 +296,12 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
                 times: mutation_runtimes,
                 keep_original: mutation_options.contains('k'),
             }),
-            Err(e) => eprintln!(
-                "warning: couldn't build mutation {} ({:?})",
-                mutation_action, e
-            ),
+            Err(e) => {
+                crate::logging::warning(&format!(
+                    "couldn't build mutation {} ({:?})",
+                    mutation_action, e
+                ));
+            }
         }
     }
 

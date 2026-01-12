@@ -79,7 +79,7 @@ pub fn printer_thread(
 
             // write! macro works for any type implementing std::io::Write
             if let Err(e) = write!(writer, "{}{}", mutated_word, output_separator) {
-                eprintln!("Error writing: {}", e);
+                crate::logging::error(&format!("error writing: {}", e));
                 break;
             }
         }
@@ -93,11 +93,11 @@ pub fn printer_thread(
             .duration_since(start_time)
             .expect("Clock may have gone backwards");
 
-        eprintln!(
-            "gorilla: {} in {runtime_dur:?}. total {} words",
+        crate::logging::success(&format!(
+            "{} in {runtime_dur:?}. total {} words",
             "finished".green().bold(),
             printer_stats.saved_words
-        );
+        ));
     });
 
     (tx, handle)
