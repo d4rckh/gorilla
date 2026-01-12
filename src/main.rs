@@ -14,6 +14,7 @@ use crossbeam_channel::Sender;
 use std::fs;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
+use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
 use clap::Parser;
@@ -72,33 +73,43 @@ fn main() {
             .append(&mut parse_mutation_yaml(yaml_input))
     }
 
-    let (tx, printer_handle) = threading::printer_thread(
-        gorilla.program_args.timer,
-        gorilla.start_time,
-        gorilla.output_separator.clone(),
-        gorilla.program_args.file_save.clone(),
-    );
-
-    gorilla.sender = Some(tx);
-
+    let mut mutation_set_multiplier = 0;
+    
     if gorilla.mutation_sets.is_empty() {
         logging::warning("missing mutation sets");
-        gorilla.mutation_sets.push(MutationSet::empty_set())
+        gorilla.mutation_sets.push(MutationSet::empty_set());
+        mutation_set_multiplier = 1;
     } else {
         logging::info("mutation sets summary");
         for mutation_set in &gorilla.mutation_sets {
+            let mutation_set_test_size = mutation_set.test_size();
+            
+            mutation_set_multiplier += mutation_set_test_size;
+
             eprint!(" {}", "word".dimmed());
             for mutation in &mutation_set.mutations {
                 eprint!(" -> {}", mutation.to_string().blue());
             }
             eprint!(
                 " -> {} {}",
-                format!("x{}", &mutation_set.test_size().to_string()).green(),
+                format!("x{}", &mutation_set_test_size.to_string()).green(),
                 "words".dimmed()
             );
             eprintln!()
         }
     }
+
+    let total_words_printer = Arc::new(Mutex::new(0usize));
+
+    let (tx, printer_handles) = threading::printer_thread(
+        gorilla.program_args.timer,
+        gorilla.start_time,
+        gorilla.output_separator.clone(),
+        Arc::clone(&total_words_printer),
+        gorilla.program_args.file_save.clone(),
+    );
+
+    gorilla.sender = Some(tx);
 
     if let Some(formatting_path) = &gorilla.program_args.from_formatting {
         let yaml_input = &fs::read_to_string(formatting_path)
@@ -201,6 +212,8 @@ fn main() {
             "(total pattern threads)".to_string().dimmed()
         ));
 
+        *total_words_printer.lock().unwrap() = total_words as usize * mutation_set_multiplier as usize;
+
         let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
 
         let mut handles = vec![];
@@ -248,5 +261,8 @@ fn main() {
 
     drop(gorilla.sender.take());
 
-    let _ = printer_handle.join();
+    for handle in printer_handles {
+        handle.join().unwrap();
+    }
+
 }

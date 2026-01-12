@@ -1,11 +1,10 @@
 use colored::*;
 use std::fmt::Display;
-use std::sync::Mutex;
 
 /// Log levels supported by the logging system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LogLevel {
-    Debug = 0,
+//    Debug = 0,
     Info = 1,
     Success = 2,
     Warning = 3,
@@ -15,7 +14,7 @@ pub enum LogLevel {
 impl Display for LogLevel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LogLevel::Debug => write!(f, "DEBUG"),
+            //LogLevel::Debug => write!(f, "DEBUG"),
             LogLevel::Info => write!(f, "INFO"),
             LogLevel::Success => write!(f, "SUCCESS"),
             LogLevel::Warning => write!(f, "WARNING"),
@@ -27,7 +26,7 @@ impl Display for LogLevel {
 /// Core logging function - all other log functions use this
 pub fn log(level: LogLevel, message: &str) {
     let formatted_message = match level {
-        LogLevel::Debug => format!("gorilla: ({}) {}", "dbg".dimmed(), message.dimmed()),
+//        LogLevel::Debug => format!("gorilla: ({}) {}", "dbg".dimmed(), message.dimmed()),
         LogLevel::Info => format!("gorilla: ({}) {}", "inf".cyan(), message),
         LogLevel::Success => format!("gorilla: ({}) {}", "win".green(), message.green()),
         LogLevel::Warning => format!("gorilla: ({}) {}", "wrn".yellow(), message.yellow()),
@@ -39,9 +38,9 @@ pub fn log(level: LogLevel, message: &str) {
 
 /// Log a debug message (lowest priority, typically for development)
 /// These are hidden by default unless debug mode is enabled
-pub fn debug(message: &str) {
-    log(LogLevel::Debug, message);
-}
+//pub fn debug(message: &str) {
+//    log(LogLevel::Debug, message);
+//}
 
 /// Log an informational message (normal operational messages)
 pub fn info(message: &str) {
@@ -118,15 +117,14 @@ mod tests {
 
     #[test]
     fn test_log_levels() {
-        // Test that log levels are ordered correctly
-        assert!(LogLevel::Debug < LogLevel::Info);
+//        assert!(LogLevel::Debug < LogLevel::Info);
         assert!(LogLevel::Info < LogLevel::Warning);
         assert!(LogLevel::Warning < LogLevel::Error);
     }
 
     #[test]
     fn test_log_level_display() {
-        assert_eq!(LogLevel::Debug.to_string(), "DEBUG");
+     //   assert_eq!(LogLevel::Debug.to_string(), "DEBUG");
         assert_eq!(LogLevel::Info.to_string(), "INFO");
         assert_eq!(LogLevel::Success.to_string(), "SUCCESS");
         assert_eq!(LogLevel::Warning.to_string(), "WARNING");

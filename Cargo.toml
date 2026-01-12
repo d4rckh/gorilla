@@ -22,6 +22,7 @@ yaml-rust = "0.4.5"
 scraper = "0.23.1"
 markup5ever = "0.14.1"
 rayon = "1.11"
+indicatif = "0.18.3"
 
 [profile.release]
 # opt-level = 'z'     # Optimize for size.
