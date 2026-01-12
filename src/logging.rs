@@ -24,31 +24,8 @@ impl Display for LogLevel {
     }
 }
 
-/// Global minimum log level (can be used for verbosity control)
-static MIN_LOG_LEVEL: Mutex<LogLevel> = Mutex::new(LogLevel::Info);
-
-/// Set the minimum log level for filtering
-pub fn set_min_level(level: LogLevel) {
-    if let Ok(mut min_level) = MIN_LOG_LEVEL.lock() {
-        *min_level = level;
-    }
-}
-
-/// Get the current minimum log level
-pub fn get_min_level() -> LogLevel {
-    MIN_LOG_LEVEL
-        .lock()
-        .map(|level| *level)
-        .unwrap_or(LogLevel::Info)
-}
-
 /// Core logging function - all other log functions use this
 pub fn log(level: LogLevel, message: &str) {
-    // Check if this message should be logged based on minimum level
-    if level < get_min_level() {
-        return;
-    }
-
     let formatted_message = match level {
         LogLevel::Debug => format!("gorilla: ({}) {}", "dbg".dimmed(), message.dimmed()),
         LogLevel::Info => format!("gorilla: ({}) {}", "inf".cyan(), message),
@@ -156,12 +133,4 @@ mod tests {
         assert_eq!(LogLevel::Error.to_string(), "ERROR");
     }
 
-    #[test]
-    fn test_set_min_level() {
-        set_min_level(LogLevel::Warning);
-        assert_eq!(get_min_level(), LogLevel::Warning);
-
-        set_min_level(LogLevel::Debug);
-        assert_eq!(get_min_level(), LogLevel::Debug);
-    }
 }
