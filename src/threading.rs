@@ -1,5 +1,10 @@
 use std::{
-    fs::File, io::{self, BufWriter}, sync::{Arc, Mutex}, thread::{self, JoinHandle}, time::SystemTime, vec
+    fs::File,
+    io::{self, BufWriter},
+    sync::{Arc, Mutex},
+    thread::{self, JoinHandle},
+    time::SystemTime,
+    vec,
 };
 
 use colored::Colorize;
@@ -68,7 +73,7 @@ pub fn printer_thread(
         let total_count = *total_words.lock().unwrap();
 
         let pb = ProgressBar::new(total_count as u64);
-        
+
         // {spinner} = animated spinner
         // {bar:40.cyan/blue} = a 40-char wide bar colored cyan/blue
         // {pos}/{len} = current/total
@@ -80,7 +85,7 @@ pub fn printer_thread(
 
         for mutated_word in rx {
             printer_stats.saved_words += 1;
-            
+
             pb.inc(1);
 
             // pb.set_length(*total_words.lock().unwrap() as u64);
@@ -99,9 +104,7 @@ pub fn printer_thread(
         let _ = writer.flush();
 
         let end_time = SystemTime::now();
-        let runtime_dur = end_time
-            .duration_since(start_time)
-            .unwrap_or_default();
+        let runtime_dur = end_time.duration_since(start_time).unwrap_or_default();
 
         // You might not need this anymore since the Progress Bar shows time,
         // but kept it as per your original logic:

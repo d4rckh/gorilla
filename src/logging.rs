@@ -4,7 +4,7 @@ use std::fmt::Display;
 /// Log levels supported by the logging system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum LogLevel {
-//    Debug = 0,
+    //    Debug = 0,
     Info = 1,
     Success = 2,
     Warning = 3,
@@ -26,7 +26,7 @@ impl Display for LogLevel {
 /// Core logging function - all other log functions use this
 pub fn log(level: LogLevel, message: &str) {
     let formatted_message = match level {
-//        LogLevel::Debug => format!("gorilla: ({}) {}", "dbg".dimmed(), message.dimmed()),
+        //        LogLevel::Debug => format!("gorilla: ({}) {}", "dbg".dimmed(), message.dimmed()),
         LogLevel::Info => format!("gorilla: ({}) {}", "inf".cyan(), message),
         LogLevel::Success => format!("gorilla: ({}) {}", "win".green(), message.green()),
         LogLevel::Warning => format!("gorilla: ({}) {}", "wrn".yellow(), message.yellow()),
@@ -47,12 +47,10 @@ pub fn info(message: &str) {
     log(LogLevel::Info, message);
 }
 
-
 /// Log a success message (operations completed successfully)
 pub fn success(message: &str) {
     log(LogLevel::Success, message);
 }
-
 
 /// Log a warning message (something unexpected but not critical)
 pub fn warning(message: &str) {
@@ -62,7 +60,6 @@ pub fn warning(message: &str) {
 pub fn error(message: &str) {
     log(LogLevel::Error, message);
 }
-
 
 // Macros for easier formatted logging (similar to println! but for logging)
 
@@ -117,18 +114,17 @@ mod tests {
 
     #[test]
     fn test_log_levels() {
-//        assert!(LogLevel::Debug < LogLevel::Info);
+        //        assert!(LogLevel::Debug < LogLevel::Info);
         assert!(LogLevel::Info < LogLevel::Warning);
         assert!(LogLevel::Warning < LogLevel::Error);
     }
 
     #[test]
     fn test_log_level_display() {
-     //   assert_eq!(LogLevel::Debug.to_string(), "DEBUG");
+        //   assert_eq!(LogLevel::Debug.to_string(), "DEBUG");
         assert_eq!(LogLevel::Info.to_string(), "INFO");
         assert_eq!(LogLevel::Success.to_string(), "SUCCESS");
         assert_eq!(LogLevel::Warning.to_string(), "WARNING");
         assert_eq!(LogLevel::Error.to_string(), "ERROR");
     }
-
 }

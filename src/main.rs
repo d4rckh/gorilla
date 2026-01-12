@@ -74,7 +74,7 @@ fn main() {
     }
 
     let mut mutation_set_multiplier = 0;
-    
+
     if gorilla.mutation_sets.is_empty() {
         logging::warning("missing mutation sets");
         gorilla.mutation_sets.push(MutationSet::empty_set());
@@ -83,7 +83,7 @@ fn main() {
         logging::info("mutation sets summary");
         for mutation_set in &gorilla.mutation_sets {
             let mutation_set_test_size = mutation_set.test_size();
-            
+
             mutation_set_multiplier += mutation_set_test_size;
 
             eprint!(" {}", "word".dimmed());
@@ -212,7 +212,8 @@ fn main() {
             "(total pattern threads)".to_string().dimmed()
         ));
 
-        *total_words_printer.lock().unwrap() = total_words as usize * mutation_set_multiplier as usize;
+        *total_words_printer.lock().unwrap() =
+            total_words as usize * mutation_set_multiplier as usize;
 
         let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
 
@@ -264,5 +265,4 @@ fn main() {
     for handle in printer_handles {
         handle.join().unwrap();
     }
-
 }
