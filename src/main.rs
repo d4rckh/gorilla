@@ -212,8 +212,7 @@ fn main() {
             "(total pattern threads)".to_string().dimmed()
         ));
 
-        *total_words_printer.lock().unwrap() =
-            total_words as usize * mutation_set_multiplier as usize;
+        *total_words_printer.lock().unwrap() = total_words as usize * mutation_set_multiplier;
 
         let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
 
