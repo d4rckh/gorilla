@@ -36,8 +36,8 @@ pub fn log(level: LogLevel, message: &str) {
     eprintln!("{}", formatted_message);
 }
 
-/// Log a debug message (lowest priority, typically for development)
-/// These are hidden by default unless debug mode is enabled
+// /// Log a debug message (lowest priority, typically for development)
+// /// These are hidden by default unless debug mode is enabled
 //pub fn debug(message: &str) {
 //    log(LogLevel::Debug, message);
 //}

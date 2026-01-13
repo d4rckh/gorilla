@@ -14,12 +14,8 @@ pub struct ProgramArgs {
     #[clap(short = 'l', long = "one-line", help = "Print the output on one line")]
     pub one_line: bool,
 
-    #[clap(
-        short = 't',
-        long = "timer",
-        help = "Show the amount of time it took to mutate/compute a word"
-    )]
-    pub timer: bool,
+    #[clap(long = "no-progress", help = "Do not show the progress bar in stdout")]
+    pub no_progress_bar: bool,
 
     #[clap(
         short = 'p',

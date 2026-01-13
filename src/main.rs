@@ -102,7 +102,7 @@ fn main() {
     let total_words_printer = Arc::new(Mutex::new(0usize));
 
     let (tx, printer_handles) = threading::printer_thread(
-        gorilla.program_args.timer,
+        gorilla.program_args.no_progress_bar,
         gorilla.start_time,
         gorilla.output_separator.clone(),
         Arc::clone(&total_words_printer),

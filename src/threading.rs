@@ -9,7 +9,7 @@ use std::{
 
 use colored::Colorize;
 use crossbeam_channel::Sender;
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 
 use crate::{
     mutation::MutationSet,
@@ -52,7 +52,7 @@ pub fn run_mutations(sets: &Vec<MutationSet>, word: &str, sender: Sender<String>
 }
 
 pub fn printer_thread(
-    _timer: bool, // Note: The progress bar handles timing now, but we keep arg for compatibility
+    no_progress_bar: bool,
     start_time: SystemTime,
     output_separator: String,
     total_words: Arc<Mutex<usize>>, // We need to read this to set the bar length
@@ -83,6 +83,12 @@ pub fn printer_thread(
             .unwrap()
             .progress_chars("#> "));
 
+        if no_progress_bar {
+            pb.set_draw_target(ProgressDrawTarget::hidden());
+        } else {
+            pb.set_draw_target(ProgressDrawTarget::stderr());
+        }
+
         for mutated_word in rx {
             printer_stats.saved_words += 1;
 
@@ -91,7 +97,6 @@ pub fn printer_thread(
             // pb.set_length(*total_words.lock().unwrap() as u64);
 
             if let Err(e) = write!(writer, "{}{}", mutated_word, output_separator) {
-                // 4. Suspend the bar to print error safely without breaking the visual
                 pb.suspend(|| {
                     crate::logging::error(&format!("error writing: {}", e));
                 });
