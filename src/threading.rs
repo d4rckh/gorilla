@@ -55,7 +55,7 @@ pub fn printer_thread(
     no_progress_bar: bool,
     start_time: SystemTime,
     output_separator: String,
-    total_words: Arc<Mutex<usize>>, // We need to read this to set the bar length
+    total_words: Arc<Mutex<usize>>, 
     file_save_path: Option<String>,
 ) -> (Sender<String>, Vec<JoinHandle<()>>) {
     let (tx, rx) = crossbeam_channel::bounded::<String>(100);
@@ -104,8 +104,7 @@ pub fn printer_thread(
             }
         }
 
-        // 5. Cleanup
-        pb.finish_with_message("Done writing");
+        pb.finish_with_message("Done");
         let _ = writer.flush();
 
         let end_time = SystemTime::now();
