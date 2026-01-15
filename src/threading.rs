@@ -79,7 +79,7 @@ pub fn printer_thread(
         // {pos}/{len} = current/total
         // {eta} = estimated time remaining
         pb.set_style(ProgressStyle::default_bar()
-            .template("gorilla: (wrk) {spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta}) {msg}")
+            .template("gorilla: (wrk) {spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta: {eta}) {msg}")
             .unwrap()
             .progress_chars("#> "));
 
@@ -120,4 +120,38 @@ pub fn printer_thread(
     });
 
     (tx, vec![printer_handle])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::distribute_token_iter_work;
+    use crate::pattern::tokenize_format_string;
+
+    #[test]
+    fn token_iter_work_distribution() {
+        let tokens = tokenize_format_string("{0-9}");
+        let token_iters = distribute_token_iter_work(&tokens, 10);
+
+        for thread_i in 0..10 {
+            assert_eq!(token_iters[thread_i].current_index, thread_i as u128);
+            assert_eq!(token_iters[thread_i].end_index, (thread_i + 1) as u128);
+        }
+    }
+
+    #[test]
+    fn token_iter_work_distribution_with_remaining() {
+        let tokens = tokenize_format_string("{0-9}");
+        let token_iters = distribute_token_iter_work(&tokens, 3);
+
+        assert_eq!(token_iters[0].current_index, 0);
+        assert_eq!(token_iters[0].end_index, 4);
+
+        for thread_i in 1..3 {
+            assert_eq!(
+                token_iters[thread_i].current_index,
+                (thread_i * 3 + 1) as u128
+            );
+            assert_eq!(token_iters[thread_i].end_index, (thread_i * 3 + 4) as u128);
+        }
+    }
 }

@@ -96,3 +96,87 @@ impl FormatSet {
         FormatSet { parts: Vec::new() }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{FormatSet, FormatPart, FormattingSets, FormatFieldAnswer, FormatField};
+    use crate::mutation::MutationSet;
+
+    #[test]
+    fn format_generation() {
+        let set = FormatSet {
+            parts: vec![
+                FormatPart {
+                    text: "{name}".to_string(),
+                    mutations: MutationSet::empty_set(),
+                },
+                FormatPart {
+                    text: "_".to_string(),
+                    mutations: MutationSet::empty_set(),
+                },
+                FormatPart {
+                    text: "{id}".to_string(),
+                    mutations: MutationSet::empty_set(),
+                }
+            ]
+        };
+        
+        let format_sets = FormattingSets {
+            _name: "test".to_string(),
+            fields: vec![
+                FormatField { name: "name".to_string(), question: None },
+                FormatField { name: "id".to_string(), question: None }
+            ],
+            sets: vec![set],
+        };
+        
+        let answers = vec![
+            FormatFieldAnswer { name: "name".to_string(), answer: "user".to_string() },
+            FormatFieldAnswer { name: "id".to_string(), answer: "123".to_string() }
+        ];
+        
+        let words = format_sets.generate_words(answers);
+        assert_eq!(words, vec!["user_123"]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn format_invalid_field() {
+        let format_sets = FormattingSets {
+            _name: "test".to_string(),
+            fields: vec![
+                FormatField { name: "name".to_string(), question: None },
+            ],
+            sets: vec![],
+        };
+        let answers = vec![
+            FormatFieldAnswer { name: "age".to_string(), answer: "20".to_string() }
+        ];
+        format_sets.check_answer_names(&answers);
+    }
+    
+    #[test]
+    fn mutation_in_format() {
+        let set = FormatSet {
+            parts: vec![
+                FormatPart {
+                    text: "test".to_string(),
+                    mutations: MutationSet {
+                        mutations: vec![crate::mutation::Mutation {
+                            action: crate::mutation::Action::Reverse,
+                            times: 1,
+                            keep_original: false
+                        }]
+                    }
+                }
+            ]
+        };
+        let format_sets = FormattingSets {
+            _name: "test".to_string(),
+            fields: vec![],
+            sets: vec![set]
+        };
+        let words = format_sets.generate_words(vec![]);
+        assert_eq!(words, vec!["tset"]);
+    }
+}

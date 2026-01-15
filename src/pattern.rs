@@ -246,3 +246,97 @@ pub fn calculate_sample_size_bytes(tokens: &Vec<Token>) -> u128 {
 
     sample_str.len() as u128 * calculate_total_generations(tokens)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tokenize_string_repeat() {
+        let tokens = tokenize_format_string("hello{0-9}world");
+        assert_eq!(tokens[1], Token::NumRange('0' as u32, '9' as u32))
+    }
+
+    #[test]
+    fn tokenize_string_string() {
+        let tokens = tokenize_format_string("hello{0-9}world");
+        assert_eq!(tokens[2], Token::String(String::from("world")))
+    }
+
+    #[test]
+    fn properly_tokenize_double_brackets() {
+        let tokens = tokenize_format_string("{{0-9}}");
+
+        assert_eq!(tokens.len(), 3);
+        assert_eq!(tokens[0], Token::String("{".to_string()));
+        assert_eq!(tokens[2], Token::String("}".to_string()))
+    }
+
+    #[test]
+    fn properly_tokenize_double_brackets_2() {
+        let tokens = tokenize_format_string("{{{}}{0-9}}{}}}");
+
+        assert_eq!(tokens.len(), 3);
+        assert_eq!(tokens[0], Token::String("{{{}}".to_string()));
+        assert_eq!(tokens[2], Token::String("}{}}}".to_string()))
+    }
+
+    #[test]
+    fn tokenize_execute_letters() {
+        let ac_toks = token_iterator(&tokenize_format_string("{a-z}{a-z}"));
+        let result: Vec<String> = ac_toks.collect();
+
+        assert_eq!(result.len(), 26 * 26)
+    }
+
+    #[test]
+    fn tokenize_execute_ascii() {
+        let ac_toks = token_iterator(&tokenize_format_string("{ -~}"));
+        let result: Vec<String> = ac_toks.collect();
+
+        assert_eq!(result.len(), 95)
+    }
+    
+    #[test]
+    fn sample_size_calculation() {
+        let tokens = tokenize_format_string("{0-9}");
+        // 10 chars + 10 newlines = 20 bytes? 
+        // calculate_sample_size_bytes implementation:
+        // sample_str len * total generations
+        // sample_str for {0-9} is one char (mid point). + newline = 2 bytes.
+        // total generations = 10.
+        // total = 20.
+        assert_eq!(calculate_sample_size_bytes(&tokens), 20);
+    }
+
+    #[test]
+    fn inner_bracket_parsing() {
+         use super::parse_inner_brackets;
+         
+         if let Some(Token::Strings(s)) = parse_inner_brackets("Jan,Feb") {
+             assert_eq!(s, vec!["Jan", "Feb"]);
+         } else {
+             panic!("Failed to parse comma list");
+         }
+         
+         // 10-20 parses as CharRange because inside_len >= 4 and contains '-'
+         // and parse_inner_brackets uses parse::<u32> for both parts.
+         if let Some(Token::CharRange(s, e)) = parse_inner_brackets("10-20") {
+             assert_eq!(s, 10);
+             assert_eq!(e, 20);
+         } else {
+             panic!("Failed to parse num range (expecting CharRange for 10-20)");
+         }
+    }
+
+    #[test]
+    fn tokenize_edge_cases() {
+        let empty = tokenize_format_string("{}");
+        assert_eq!(empty[0], Token::String("{}".to_string()));
+        
+        let unbalanced = tokenize_format_string("{{}");
+        // expecting "{{" to be treated as literal "{" inside cur, but parsed as "{{}"
+        // Logic result was String("{{}")
+        assert_eq!(unbalanced[0], Token::String("{{}".to_string()));
+    }
+}

@@ -336,3 +336,241 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
 
     mutations
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{Action, Mutation, MutationSet, parse_mutation_string};
+
+    #[test]
+    fn basic_mutations() {
+        let mutation_set = MutationSet {
+            mutations: vec![
+                Mutation {
+                    action: Action::Reverse,
+                    times: 1,
+                    keep_original: false,
+                },
+                Mutation {
+                    action: Action::Append(String::from("abc")),
+                    times: 1,
+                    keep_original: false,
+                },
+                Mutation {
+                    action: Action::Prepend(String::from("abc")),
+                    times: 1,
+                    keep_original: false,
+                },
+            ],
+        };
+
+        let mutation_result = mutation_set.perform("word");
+
+        assert_eq!(mutation_result.mutated_words, vec!["abcdrowabc"])
+    }
+
+    #[test]
+    fn advanced_mutation() {
+        let mutation_set = MutationSet {
+            mutations: vec![Mutation {
+                action: Action::Append(String::from("{0-9}")),
+                times: 1,
+                keep_original: false,
+            }],
+        };
+
+        let mutation_result = mutation_set.perform("word");
+
+        assert_eq!(
+            mutation_result.mutated_words,
+            vec![
+                "word0", "word1", "word2", "word3", "word4", "word5", "word6", "word7", "word8",
+                "word9"
+            ]
+        )
+    }
+
+    #[test]
+    fn capitalize_and_toggle_case_mutations() {
+        let cap_set = MutationSet {
+            mutations: vec![Mutation {
+                action: Action::Capitalize,
+                times: 1,
+                keep_original: false,
+            }],
+        };
+        assert_eq!(cap_set.perform("word").mutated_words, vec!["Word"]);
+        assert_eq!(cap_set.perform("WORD").mutated_words, vec!["Word"]);
+
+        let toggle_set = MutationSet {
+            mutations: vec![Mutation {
+                action: Action::ToggleCase,
+                times: 1,
+                keep_original: false,
+            }],
+        };
+        assert_eq!(toggle_set.perform("WoRd").mutated_words, vec!["wOrD"]);
+    }
+    
+    #[test]
+    fn clone_mutation() {
+        let clone_set = MutationSet {
+             mutations: vec![Mutation {
+                action: Action::Clone,
+                times: 1,
+                keep_original: false,
+             }]
+        };
+        assert_eq!(clone_set.perform("test").mutated_words, vec!["test", "test"]);
+    }
+    
+    #[test]
+    fn wipe_mutation() {
+        let wipe_set = MutationSet {
+             mutations: vec![Mutation {
+                action: Action::Wipe,
+                times: 1,
+                keep_original: false,
+             }]
+        };
+        assert_eq!(wipe_set.perform("test").mutated_words, vec![""]);
+    }
+    
+    #[test]
+    fn parsing_mutation_string() {
+        let mutations = parse_mutation_string(&vec!["reverse".to_string(), "append:123".to_string()]);
+        assert_eq!(mutations.len(), 2);
+        match mutations[0].action {
+            Action::Reverse => assert!(true),
+            _ => assert!(false, "Expected Reverse"),
+        }
+        match &mutations[1].action {
+            Action::Append(s) => assert_eq!(s, "123"),
+            _ => assert!(false, "Expected Append"),
+        }
+    }
+
+
+    #[test]
+    fn remove_letters_edge_cases() {
+        // Remove First
+        let rm_first = MutationSet {
+             mutations: vec![Mutation {
+                action: Action::RemoveFirstLetter,
+                times: 100, // Excessive
+                keep_original: false,
+             }]
+        };
+        assert_eq!(rm_first.perform("short").mutated_words, vec![""]);
+
+        // Remove Last
+        let rm_last = MutationSet {
+             mutations: vec![Mutation {
+                action: Action::RemoveLastLetter,
+                times: 100, // Excessive
+                keep_original: false,
+             }]
+        };
+        assert_eq!(rm_last.perform("short").mutated_words, vec![""]);
+    }
+
+    #[test]
+    fn first_letter_mutation() {
+        let first = MutationSet {
+             mutations: vec![Mutation {
+                action: Action::FirstLetter,
+                times: 1,
+                keep_original: false,
+             }]
+        };
+        assert_eq!(first.perform("word").mutated_words, vec!["w"]);
+        assert_eq!(first.perform("").mutated_words, vec![""]);
+    }
+
+    #[test]
+    fn casing_mutations() {
+        let upper = MutationSet {
+             mutations: vec![Mutation { action: Action::UppercaseAll, times: 1, keep_original: false }]
+        };
+        assert_eq!(upper.perform("MixedCase").mutated_words, vec!["MIXEDCASE"]);
+
+        let lower = MutationSet {
+             mutations: vec![Mutation { action: Action::LowercaseAll, times: 1, keep_original: false }]
+        };
+        assert_eq!(lower.perform("MixedCase").mutated_words, vec!["mixedcase"]);
+    }
+
+    #[test]
+    fn replace_mutation_edge() {
+        let rep = MutationSet {
+             mutations: vec![Mutation { 
+                 action: Action::Replace("foo".to_string(), "bar".to_string()), 
+                 times: 1, 
+                 keep_original: false 
+             }]
+        };
+        // If "foo" not found, formatting logic returns original if keep_original=false?
+        // Logic: if !keep_original -> push(input.replace). input.replace returns input if not found.
+        // So it returns ["baz"].
+        assert_eq!(rep.perform("baz").mutated_words, vec!["baz"]);
+
+        // With keep_original, should return original
+        let rep_keep = MutationSet {
+             mutations: vec![Mutation { 
+                 action: Action::Replace("foo".to_string(), "bar".to_string()), 
+                 times: 1, 
+                 keep_original: true 
+             }]
+        };
+        assert_eq!(rep_keep.perform("baz").mutated_words, vec!["baz"]);
+    }
+
+    #[test]
+    fn conditional_mutations() {
+        // Length > 3
+        let if_len_gt = MutationSet {
+            mutations: vec![Mutation {
+                action: Action::IfCharacterLength(false, std::cmp::Ordering::Greater, 3), // not negated
+                times: 1,
+                keep_original: false,
+            }]
+        };
+        assert_eq!(if_len_gt.perform("four").mutated_words, vec!["four"]);
+        assert_eq!(if_len_gt.perform("two").mutated_words.is_empty(), true);
+
+        // Contains "a"
+        let if_contains = MutationSet {
+            mutations: vec![Mutation {
+                action: Action::IfContains(false, "a".to_string()),
+                times: 1,
+                keep_original: false,
+            }]
+        };
+        assert_eq!(if_contains.perform("apple").mutated_words, vec!["apple"]);
+        assert_eq!(if_contains.perform("berry").mutated_words.is_empty(), true);
+    }
+    #[test]
+    fn remove_mutation() {
+        let remove = MutationSet {
+            mutations: vec![Mutation {
+                action: Action::Remove,
+                times: 1,
+                keep_original: false,
+            }]
+        };
+        // Remove action returns nothing (should empty the result for that path)
+        assert_eq!(remove.perform("anything").mutated_words.is_empty(), true);
+    }
+
+    #[test]
+    fn nothing_mutation() {
+        let nothing = MutationSet {
+            mutations: vec![Mutation {
+                action: Action::Nothing,
+                times: 1,
+                keep_original: false,
+            }]
+        };
+        // Nothing action returns input as is
+        assert_eq!(nothing.perform("unchanged").mutated_words, vec!["unchanged"]);
+    }
+}

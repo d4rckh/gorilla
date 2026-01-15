@@ -5,7 +5,7 @@ mod formatting;
 mod logging;
 mod mutation;
 mod pattern;
-mod tests;
+
 mod threading;
 mod website_scraper;
 mod yaml_parser;
@@ -43,6 +43,8 @@ struct Gorilla {
 }
 
 fn main() {
+    colored::control::set_override(true);
+
     let mut gorilla = Gorilla {
         program_args: ProgramArgs::parse(),
         mutation_sets: vec![],

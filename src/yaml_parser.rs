@@ -107,3 +107,21 @@ pub fn parse_formatting_yaml(yaml_input: &str) -> FormattingSets {
         sets: format_sets,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::parse_mutation_yaml;
+
+    #[test]
+    fn yaml_parse_test() {
+        let mutation_sets = parse_mutation_yaml(
+            "name: alphabet
+mutation_sets:
+  - [ wipe, \"append:{a-z}\" ] # => a, b, c, ..., z",
+        );
+
+        let mutation_result = mutation_sets[0].perform("word");
+
+        assert_eq!(mutation_result.mutated_words.len(), 26);
+    }
+}
