@@ -143,6 +143,27 @@ mod mutation_tests {
             ]
         )
     }
+    #[test]
+    fn capitalize_and_toggle_case_mutations() {
+        let cap_set = MutationSet {
+            mutations: vec![Mutation {
+                action: Action::Capitalize,
+                times: 1,
+                keep_original: false,
+            }],
+        };
+        assert_eq!(cap_set.perform("word").mutated_words, vec!["Word"]);
+        assert_eq!(cap_set.perform("WORD").mutated_words, vec!["Word"]);
+
+        let toggle_set = MutationSet {
+            mutations: vec![Mutation {
+                action: Action::ToggleCase,
+                times: 1,
+                keep_original: false,
+            }],
+        };
+        assert_eq!(toggle_set.perform("WoRd").mutated_words, vec!["wOrD"]);
+    }
 }
 
 #[cfg(test)]
@@ -165,38 +186,39 @@ mutation_sets:
 
 #[cfg(test)]
 mod scrape_tests {
-    use crate::website_scraper::just_body_html_content;
+    use crate::website_scraper::extract_words;
+    
     #[test]
     fn basic_scrape() {
-        let html = "<!doctype html><html><head></head></body> \
+        let html = "<!doctype html><html><head></head><body> \
         <div> <h1>Example Domain</h1> \
         <p>This domain is for use in illustrative examples in documents. You may use this \
         domain in literature without prior coordination or asking for permission.</p> \
         </div> \
         </body> \
         </html>";
-        let content = just_body_html_content(html);
+        let words = extract_words(html);
 
-        assert!(content.contains("domain"));
+        assert!(words.contains(&"domain".to_string()));
     }
     #[test]
     fn ignore_script_tag() {
-        let html = "<!doctype html><html><head></head></body><script>Some javascript</script> \
+        let html = "<!doctype html><html><head></head><body><script>Some javascript</script> \
         <div> <h1>Example Domain</h1> \
         <p>This domain is for use in illustrative examples in documents. You may use this \
         domain in literature without prior coordination or asking for permission.</p> \
         </div> \
         </body> \
         </html>";
-        let content = just_body_html_content(html);
+        let words = extract_words(html);
 
-        assert!(content.contains("domain"));
-        assert!(!content.contains("javascript"));
+        assert!(words.contains(&"domain".to_string()));
+        assert!(!words.contains(&"javascript".to_string()));
     }
 
     #[test]
     fn ignore_mulitple_script_tags() {
-        let html = "<!doctype html><html><head></head></body><script>Some javascript</script> \
+        let html = "<!doctype html><html><head></head><body><script>Some javascript</script> \
         <div> <h1>Example Domain</h1> \
         <p>This domain is for use in illustrative examples in documents. You may use this \
         domain in literature without prior coordination or asking for permission.</p> \
@@ -204,10 +226,22 @@ mod scrape_tests {
         <script>second script</script> \
         </body> \
         </html>";
-        let content = just_body_html_content(html);
+        let words = extract_words(html);
 
-        assert!(content.contains("domain"));
-        assert!(!content.contains("javascript"));
-        assert!(!content.contains("second"));
+        assert!(words.contains(&"domain".to_string()));
+        assert!(!words.contains(&"javascript".to_string()));
+        assert!(!words.contains(&"second".to_string()));
+    }
+    
+    #[test]
+    fn ignore_style_tag() {
+        let html = "<html><body><style>body { color: red; }</style> \
+        <p>visible text</p></body></html>";
+        let words = extract_words(html);
+        
+        assert!(words.contains(&"visible".to_string()));
+        // 'red' is < 4 chars so filtered anyway? "color" is 5.
+        // "color" should be ignored.
+        assert!(!words.contains(&"color".to_string()));
     }
 }

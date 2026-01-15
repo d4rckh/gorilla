@@ -17,6 +17,8 @@ pub enum Action {
     RemoveFirstLetter,
     RemoveLastLetter,
     Reverse,
+    Capitalize,
+    ToggleCase,
 
     // more debugging related
     Clone,
@@ -138,6 +140,29 @@ impl Mutation {
                     .next()
                     .map_or(String::from(""), |x| x.to_string()),
             ),
+            Action::Capitalize => {
+                let mut chars = input.chars();
+                if let Some(first) = chars.next() {
+                    let mut new_string = first.to_uppercase().to_string();
+                    new_string.push_str(chars.as_str().to_lowercase().as_str());
+                    result.push(new_string);
+                } else {
+                    result.push(String::new());
+                }
+            }
+            Action::ToggleCase => {
+                let new_string: String = input
+                    .chars()
+                    .map(|c| {
+                        if c.is_uppercase() {
+                            c.to_lowercase().to_string()
+                        } else {
+                            c.to_uppercase().to_string()
+                        }
+                    })
+                    .collect();
+                result.push(new_string);
+            }
             Action::Reverse => result.push(input.chars().rev().collect()),
             Action::UppercaseAll => result.push(input.to_uppercase()),
             Action::LowercaseAll => result.push(input.to_lowercase()),
@@ -160,6 +185,8 @@ impl Display for Mutation {
             Action::Append(s) => write!(f, "append: {}", s),
             Action::Replace(s, b) => write!(f, "replace: {} -> {}", s, b),
             Action::Reverse => write!(f, "reverse"),
+            Action::Capitalize => write!(f, "capitalize"),
+            Action::ToggleCase => write!(f, "toggle case"),
             Action::RemoveFirstLetter => write!(f, "remove 1st letter"),
             Action::RemoveLastLetter => write!(f, "remove last letter"),
             Action::Clone => write!(f, "clone"),
@@ -247,6 +274,8 @@ impl Action {
                 )
             }
             "reverse" => Ok(Action::Reverse),
+            "capitalize" => Ok(Action::Capitalize),
+            "toggle_case" => Ok(Action::ToggleCase),
             "clone" => Ok(Action::Clone),
             "wipe" => Ok(Action::Wipe),
             "1st_letter" => Ok(Action::FirstLetter),

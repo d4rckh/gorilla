@@ -125,7 +125,7 @@ gorilla --mutations-file muts.yml
 
 ## scraping web pages for words
 
-(For now) you can only scrap a specific page for words and styles and script tags won't be removed, this wil be implemented in a future release of gorilla. 
+(For now) you can only scrap a specific page for words. Styles and script tags are automatically removed. 
 
 You can specify a page using the `--from-website`/`-w` argument. For example
 
@@ -225,6 +225,8 @@ robert,smith
 - lowercase_all - lowercases everything
 - remove_first_letter - remove first letter
 - remove_last_letter - removes last letter
+- capitalize - capitalizes the word (first letter uppercase, rest lowercase)
+- toggle_case - toggles the case of each character
 
 ## advanced
 
