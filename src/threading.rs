@@ -1,7 +1,10 @@
 use std::{
     fs::File,
     io::{self, BufWriter},
-    sync::{Arc, Mutex},
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    },
     thread::{self, JoinHandle},
     time::SystemTime,
     vec,
@@ -55,7 +58,7 @@ pub fn printer_thread(
     no_progress_bar: bool,
     start_time: SystemTime,
     output_separator: String,
-    total_words: Arc<Mutex<usize>>, 
+    total_words: Arc<AtomicUsize>,
     file_save_path: Option<String>,
 ) -> (Sender<String>, Vec<JoinHandle<()>>) {
     let (tx, rx) = crossbeam_channel::bounded::<String>(100);
@@ -70,7 +73,8 @@ pub fn printer_thread(
             Box::new(BufWriter::new(io::stdout()))
         };
 
-        let total_count = *total_words.lock().unwrap();
+        // Initial load
+        let total_count = total_words.load(Ordering::Relaxed);
 
         let pb = ProgressBar::new(total_count as u64);
 
@@ -78,10 +82,12 @@ pub fn printer_thread(
         // {bar:40.cyan/blue} = a 40-char wide bar colored cyan/blue
         // {pos}/{len} = current/total
         // {eta} = estimated time remaining
-        pb.set_style(ProgressStyle::default_bar()
-            .template("gorilla: (wrk) {spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta: {eta}) {msg}")
-            .unwrap()
-            .progress_chars("#> "));
+        pb.set_style(
+            ProgressStyle::default_bar()
+                .template("gorilla: (wrk) {spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta: {eta}) {msg}")
+                .unwrap()
+                .progress_chars("#> "),
+        );
 
         if no_progress_bar {
             pb.set_draw_target(ProgressDrawTarget::hidden());
@@ -94,7 +100,11 @@ pub fn printer_thread(
 
             pb.inc(1);
 
-            // pb.set_length(*total_words.lock().unwrap() as u64);
+            // Check for updates to total_words
+            let current_total = total_words.load(Ordering::Relaxed) as u64;
+            if current_total != pb.length().unwrap_or(0) {
+                pb.set_length(current_total);
+            }
 
             if let Err(e) = write!(writer, "{}{}", mutated_word, output_separator) {
                 pb.suspend(|| {

@@ -14,7 +14,8 @@ use crossbeam_channel::Sender;
 use std::fs;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::SystemTime;
 
 use clap::Parser;
@@ -101,7 +102,7 @@ fn main() {
         }
     }
 
-    let total_words_printer = Arc::new(Mutex::new(0usize));
+    let total_words_printer = Arc::new(AtomicUsize::new(0usize));
 
     let (tx, printer_handles) = threading::printer_thread(
         gorilla.program_args.no_progress_bar,
@@ -214,7 +215,10 @@ fn main() {
             "(total pattern threads)".to_string().dimmed()
         ));
 
-        *total_words_printer.lock().unwrap() = total_words as usize * mutation_set_multiplier;
+        total_words_printer.store(
+            total_words as usize * mutation_set_multiplier,
+            Ordering::Relaxed,
+        );
 
         let thread_iterators = distribute_token_iter_work(&tokens, gorilla.pattern_threads);
 

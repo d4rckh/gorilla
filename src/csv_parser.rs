@@ -11,8 +11,13 @@ pub fn fmt_answers_from_csv(csv_path: &str) -> Vec<Vec<FormatFieldAnswer>> {
 
 fn parse_csv_reader<R: Read>(rdr: &mut csv::Reader<R>) -> Vec<Vec<FormatFieldAnswer>> {
     let mut answers: Vec<Vec<FormatFieldAnswer>> = Vec::new();
-    
-    let headers: Vec<String> = rdr.headers().unwrap().iter().map(|h| h.to_owned()).collect();
+
+    let headers: Vec<String> = rdr
+        .headers()
+        .unwrap()
+        .iter()
+        .map(|h| h.to_owned())
+        .collect();
 
     for result in rdr.records() {
         let row = result.unwrap();
@@ -35,14 +40,13 @@ fn parse_csv_reader<R: Read>(rdr: &mut csv::Reader<R>) -> Vec<Vec<FormatFieldAns
 mod tests {
     use super::parse_csv_reader;
 
-
     #[test]
     fn test_csv_parsing() {
         let csv_data = "name,age\njeff,20\nbob,30";
         let mut rdr = csv::Reader::from_reader(csv_data.as_bytes());
-        
+
         let result = parse_csv_reader(&mut rdr);
-        
+
         assert_eq!(result.len(), 2);
         assert_eq!(result[0][0].name, "name");
         assert_eq!(result[0][0].answer, "jeff");

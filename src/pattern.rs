@@ -296,11 +296,11 @@ mod tests {
 
         assert_eq!(result.len(), 95)
     }
-    
+
     #[test]
     fn sample_size_calculation() {
         let tokens = tokenize_format_string("{0-9}");
-        // 10 chars + 10 newlines = 20 bytes? 
+        // 10 chars + 10 newlines = 20 bytes?
         // calculate_sample_size_bytes implementation:
         // sample_str len * total generations
         // sample_str for {0-9} is one char (mid point). + newline = 2 bytes.
@@ -311,29 +311,29 @@ mod tests {
 
     #[test]
     fn inner_bracket_parsing() {
-         use super::parse_inner_brackets;
-         
-         if let Some(Token::Strings(s)) = parse_inner_brackets("Jan,Feb") {
-             assert_eq!(s, vec!["Jan", "Feb"]);
-         } else {
-             panic!("Failed to parse comma list");
-         }
-         
-         // 10-20 parses as CharRange because inside_len >= 4 and contains '-'
-         // and parse_inner_brackets uses parse::<u32> for both parts.
-         if let Some(Token::CharRange(s, e)) = parse_inner_brackets("10-20") {
-             assert_eq!(s, 10);
-             assert_eq!(e, 20);
-         } else {
-             panic!("Failed to parse num range (expecting CharRange for 10-20)");
-         }
+        use super::parse_inner_brackets;
+
+        if let Some(Token::Strings(s)) = parse_inner_brackets("Jan,Feb") {
+            assert_eq!(s, vec!["Jan", "Feb"]);
+        } else {
+            panic!("Failed to parse comma list");
+        }
+
+        // 10-20 parses as CharRange because inside_len >= 4 and contains '-'
+        // and parse_inner_brackets uses parse::<u32> for both parts.
+        if let Some(Token::CharRange(s, e)) = parse_inner_brackets("10-20") {
+            assert_eq!(s, 10);
+            assert_eq!(e, 20);
+        } else {
+            panic!("Failed to parse num range (expecting CharRange for 10-20)");
+        }
     }
 
     #[test]
     fn tokenize_edge_cases() {
         let empty = tokenize_format_string("{}");
         assert_eq!(empty[0], Token::String("{}".to_string()));
-        
+
         let unbalanced = tokenize_format_string("{{}");
         // expecting "{{" to be treated as literal "{" inside cur, but parsed as "{{}"
         // Logic result was String("{{}")
