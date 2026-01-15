@@ -32,7 +32,7 @@ fn traverse_extract(element: scraper::ElementRef, output: &mut String) {
                 traverse_extract(el, output);
             }
         } else if let Some(text) = node.value().as_text() {
-            output.push_str(&text);
+            output.push_str(text);
             output.push(' ');
         }
     }
