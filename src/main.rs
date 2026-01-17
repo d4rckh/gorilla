@@ -112,6 +112,7 @@ fn main() {
         gorilla.output_separator.clone(),
         Arc::clone(&total_words_printer),
         gorilla.program_args.file_save.clone(),
+        gorilla.program_args.show_header,
         rx,
     );
 

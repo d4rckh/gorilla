@@ -18,6 +18,13 @@ pub struct ProgramArgs {
     pub no_progress_bar: bool,
 
     #[clap(
+        short = 'H',
+        long = "show-header",
+        help = "Print first 5 generations to stderr (works even when outputting to stdout)"
+    )]
+    pub show_header: bool,
+
+    #[clap(
         short = 'p',
         long = "from-pattern",
         help = "Generate words from a pattern"

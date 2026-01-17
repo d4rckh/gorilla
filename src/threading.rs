@@ -15,6 +15,7 @@ use crossbeam_channel::{Receiver, Sender};
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 
 use crate::{
+    logging,
     mutation::MutationSet,
     pattern::{Token, TokenIter, calculate_total_generations, token_iterator_from_start_end},
 };
@@ -60,6 +61,7 @@ pub fn printer_blocking(
     output_separator: String,
     total_words: Arc<AtomicUsize>,
     file_save_path: Option<String>,
+    show_header: bool,
     rx: Receiver<String>,
 ) {
     let mut printer_stats = PrinterStats { saved_words: 0 };
@@ -94,6 +96,15 @@ pub fn printer_blocking(
     }
 
     for mutated_word in rx {
+        if show_header && printer_stats.saved_words < 5 {
+            pb.suspend(|| {
+                logging::info(&format!(
+                    "(gen #{}) {}",
+                    printer_stats.saved_words, mutated_word
+                ));
+            })
+        }
+
         printer_stats.saved_words += 1;
 
         pb.inc(1);
@@ -137,6 +148,7 @@ pub fn printer_thread(
     output_separator: String,
     total_words: Arc<AtomicUsize>,
     file_save_path: Option<String>,
+    show_header: bool,
     rx: Receiver<String>,
 ) -> Vec<JoinHandle<()>> {
     let printer_handle = thread::spawn(move || {
@@ -146,6 +158,7 @@ pub fn printer_thread(
             output_separator,
             total_words,
             file_save_path,
+            show_header,
             rx,
         );
     });
