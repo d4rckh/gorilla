@@ -86,7 +86,7 @@ pub fn printer_blocking(
             ProgressStyle::default_bar()
                 .template("gorilla: (wrk) {spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta: {eta}) {msg}")
                 .unwrap()
-                .progress_chars("#> "),
+                .progress_chars("#>-"),
         );
 
     if no_progress_bar {
