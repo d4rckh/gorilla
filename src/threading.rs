@@ -11,7 +11,7 @@ use std::{
 };
 
 use colored::Colorize;
-use crossbeam_channel::Sender;
+use crossbeam_channel::{Receiver, Sender};
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 
 use crate::{
@@ -54,82 +54,103 @@ pub fn run_mutations(sets: &Vec<MutationSet>, word: &str, sender: Sender<String>
     }
 }
 
-pub fn printer_thread(
+pub fn printer_blocking(
     no_progress_bar: bool,
     start_time: SystemTime,
     output_separator: String,
     total_words: Arc<AtomicUsize>,
     file_save_path: Option<String>,
-) -> (Sender<String>, Vec<JoinHandle<()>>) {
-    let (tx, rx) = crossbeam_channel::bounded::<String>(100);
+    rx: Receiver<String>,
+) {
+    let mut printer_stats = PrinterStats { saved_words: 0 };
 
-    let printer_handle = thread::spawn(move || {
-        let mut printer_stats = PrinterStats { saved_words: 0 };
+    let mut writer: Box<dyn io::Write> = if let Some(path) = file_save_path {
+        let file = File::create(path).expect("Unable to create file");
+        Box::new(BufWriter::new(file))
+    } else {
+        Box::new(BufWriter::new(io::stdout()))
+    };
 
-        let mut writer: Box<dyn io::Write> = if let Some(path) = file_save_path {
-            let file = File::create(path).expect("Unable to create file");
-            Box::new(BufWriter::new(file))
-        } else {
-            Box::new(BufWriter::new(io::stdout()))
-        };
+    // Initial load
+    let total_count = total_words.load(Ordering::Relaxed);
 
-        // Initial load
-        let total_count = total_words.load(Ordering::Relaxed);
+    let pb = ProgressBar::new(total_count as u64);
 
-        let pb = ProgressBar::new(total_count as u64);
-
-        // {spinner} = animated spinner
-        // {bar:40.cyan/blue} = a 40-char wide bar colored cyan/blue
-        // {pos}/{len} = current/total
-        // {eta} = estimated time remaining
-        pb.set_style(
+    // {spinner} = animated spinner
+    // {bar:40.cyan/blue} = a 40-char wide bar colored cyan/blue
+    // {pos}/{len} = current/total
+    // {eta} = estimated time remaining
+    pb.set_style(
             ProgressStyle::default_bar()
                 .template("gorilla: (wrk) {spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta: {eta}) {msg}")
                 .unwrap()
                 .progress_chars("#> "),
         );
 
-        if no_progress_bar {
-            pb.set_draw_target(ProgressDrawTarget::hidden());
-        } else {
-            pb.set_draw_target(ProgressDrawTarget::stderr());
+    if no_progress_bar {
+        pb.set_draw_target(ProgressDrawTarget::hidden());
+    } else {
+        pb.set_draw_target(ProgressDrawTarget::stderr());
+    }
+
+    for mutated_word in rx {
+        printer_stats.saved_words += 1;
+
+        pb.inc(1);
+
+        // Check for updates to total_words
+        let current_total = total_words.load(Ordering::Relaxed) as u64;
+        if current_total != pb.length().unwrap_or(0) {
+            pb.set_length(current_total);
         }
 
-        for mutated_word in rx {
-            printer_stats.saved_words += 1;
-
-            pb.inc(1);
-
-            // Check for updates to total_words
-            let current_total = total_words.load(Ordering::Relaxed) as u64;
-            if current_total != pb.length().unwrap_or(0) {
-                pb.set_length(current_total);
-            }
-
-            if let Err(e) = write!(writer, "{}{}", mutated_word, output_separator) {
-                pb.suspend(|| {
-                    crate::logging::error(&format!("error writing: {}", e));
-                });
-                break;
-            }
+        if let Err(e) = write!(writer, "{}{}", mutated_word, output_separator) {
+            pb.suspend(|| {
+                crate::logging::error(&format!("error writing: {}", e));
+            });
+            break;
         }
+    }
 
-        pb.finish_with_message("Done");
-        let _ = writer.flush();
+    pb.finish_with_message("Done");
+    let _ = writer.flush();
 
-        let end_time = SystemTime::now();
-        let runtime_dur = end_time.duration_since(start_time).unwrap_or_default();
+    let end_time = SystemTime::now();
+    let runtime_dur = end_time.duration_since(start_time).unwrap_or_default();
 
-        // You might not need this anymore since the Progress Bar shows time,
-        // but kept it as per your original logic:
-        crate::logging::success(&format!(
-            "{} in {runtime_dur:?}. total {} words",
-            "finished".green().bold(),
-            printer_stats.saved_words
-        ));
+    // You might not need this anymore since the Progress Bar shows time,
+    // but kept it as per your original logic:
+    crate::logging::success(&format!(
+        "{} in {runtime_dur:?}. total {} words",
+        "finished".green().bold(),
+        printer_stats.saved_words
+    ));
+}
+
+pub fn create_printer_channel() -> (Sender<String>, Receiver<String>) {
+    crossbeam_channel::bounded::<String>(100)
+}
+
+pub fn printer_thread(
+    no_progress_bar: bool,
+    start_time: SystemTime,
+    output_separator: String,
+    total_words: Arc<AtomicUsize>,
+    file_save_path: Option<String>,
+    rx: Receiver<String>,
+) -> Vec<JoinHandle<()>> {
+    let printer_handle = thread::spawn(move || {
+        printer_blocking(
+            no_progress_bar,
+            start_time,
+            output_separator,
+            total_words,
+            file_save_path,
+            rx,
+        );
     });
 
-    (tx, vec![printer_handle])
+    vec![printer_handle]
 }
 
 #[cfg(test)]

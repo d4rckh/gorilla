@@ -104,12 +104,15 @@ fn main() {
 
     let total_words_printer = Arc::new(AtomicUsize::new(0usize));
 
-    let (tx, printer_handles) = threading::printer_thread(
+    let (tx, rx) = threading::create_printer_channel();
+
+    let printer_handles = threading::printer_thread(
         gorilla.program_args.no_progress_bar,
         gorilla.start_time,
         gorilla.output_separator.clone(),
         Arc::clone(&total_words_printer),
         gorilla.program_args.file_save.clone(),
+        rx,
     );
 
     gorilla.sender = Some(tx);
