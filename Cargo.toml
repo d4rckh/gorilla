@@ -25,8 +25,8 @@ rayon = "1.11"
 indicatif = "0.18.3"
 
 [profile.release]
-# opt-level = 'z'     # Optimize for size.
-# lto = true          # Enable Link Time Optimization
-# codegen-units = 1   # Reduce number of codegen units to increase optimizations.
-# panic = 'abort'     # Abort on panic
-strip = "symbols"   # Strip symbols from binary
+opt-level = 3         # Optimize for speed
+lto = true            # Enable Link Time Optimization
+codegen-units = 1     # Reduce number of codegen units to increase optimizations
+panic = 'abort'       # Abort on panic
+strip = "symbols"     # Strip symbols from binary

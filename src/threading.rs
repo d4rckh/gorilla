@@ -139,7 +139,7 @@ pub fn printer_blocking(
 }
 
 pub fn create_printer_channel() -> (Sender<String>, Receiver<String>) {
-    crossbeam_channel::bounded::<String>(100)
+    crossbeam_channel::unbounded::<String>()
 }
 
 pub fn printer_thread(

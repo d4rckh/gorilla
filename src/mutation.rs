@@ -3,12 +3,12 @@ use std::{
     fmt::{self, Display},
 };
 
-use crate::pattern::{token_iterator, tokenize_format_string};
+use crate::pattern::{Token, token_iterator, tokenize_format_string};
 
 #[derive(Debug, Clone)]
 pub enum Action {
-    Prepend(String),
-    Append(String),
+    Prepend(String, Vec<Token>), // (original_string, pre_tokenized)
+    Append(String, Vec<Token>),  // (original_string, pre_tokenized)
     Replace(String, String),
 
     FirstLetter,
@@ -62,13 +62,14 @@ impl MutationSet {
 
     pub fn perform(&self, word: &str) -> MutationResult {
         let mut result: Vec<String> = vec![word.to_owned()];
+        let mut buffer: Vec<String> = Vec::new();
 
         for mutation in &self.mutations {
-            let mut new_result: Vec<String> = vec![];
+            buffer.clear();
             for s in &result {
-                mutation.perform(&mut new_result, s)
+                mutation.perform(&mut buffer, s)
             }
-            result = new_result
+            std::mem::swap(&mut result, &mut buffer);
         }
 
         MutationResult {
@@ -95,13 +96,13 @@ impl Mutation {
         }
 
         match &self.action {
-            Action::Prepend(s) => {
-                for word in token_iterator(&tokenize_format_string(s)) {
+            Action::Prepend(_, tokens) => {
+                for word in token_iterator(tokens) {
                     result.push(format!("{}{}", word.repeat(self.times), input))
                 }
             }
-            Action::Append(s) => {
-                for word in token_iterator(&tokenize_format_string(s)) {
+            Action::Append(_, tokens) => {
+                for word in token_iterator(tokens) {
                     result.push(format!("{}{}", input, word.repeat(self.times)))
                 }
             }
@@ -181,8 +182,8 @@ impl Display for Mutation {
         }
 
         match &self.action {
-            Action::Prepend(s) => write!(f, "prepend: {}", s),
-            Action::Append(s) => write!(f, "append: {}", s),
+            Action::Prepend(s, _) => write!(f, "prepend: {}", s),
+            Action::Append(s, _) => write!(f, "append: {}", s),
             Action::Replace(s, b) => write!(f, "replace: {} -> {}", s, b),
             Action::Reverse => write!(f, "reverse"),
             Action::Capitalize => write!(f, "capitalize"),
@@ -231,10 +232,14 @@ impl Action {
 
         match action {
             "prepend" => {
-                check_action_args_length!(Action::Prepend(arguments[0].to_owned()), 1, argc)
+                let s = arguments[0].to_owned();
+                let tokens = tokenize_format_string(&s);
+                check_action_args_length!(Action::Prepend(s, tokens), 1, argc)
             }
             "append" => {
-                check_action_args_length!(Action::Append(arguments[0].to_owned()), 1, argc)
+                let s = arguments[0].to_owned();
+                let tokens = tokenize_format_string(&s);
+                check_action_args_length!(Action::Append(s, tokens), 1, argc)
             }
             "replace" => {
                 check_action_args_length!(
@@ -340,6 +345,7 @@ pub fn parse_mutation_string(mutation_strings: &Vec<String>) -> Vec<Mutation> {
 #[cfg(test)]
 mod tests {
     use super::{Action, Mutation, MutationSet, parse_mutation_string};
+    use crate::pattern::tokenize_format_string;
 
     #[test]
     fn basic_mutations() {
@@ -351,12 +357,12 @@ mod tests {
                     keep_original: false,
                 },
                 Mutation {
-                    action: Action::Append(String::from("abc")),
+                    action: Action::Append(String::from("abc"), tokenize_format_string("abc")),
                     times: 1,
                     keep_original: false,
                 },
                 Mutation {
-                    action: Action::Prepend(String::from("abc")),
+                    action: Action::Prepend(String::from("abc"), tokenize_format_string("abc")),
                     times: 1,
                     keep_original: false,
                 },
@@ -372,7 +378,7 @@ mod tests {
     fn advanced_mutation() {
         let mutation_set = MutationSet {
             mutations: vec![Mutation {
-                action: Action::Append(String::from("{0-9}")),
+                action: Action::Append(String::from("{0-9}"), tokenize_format_string("{0-9}")),
                 times: 1,
                 keep_original: false,
             }],
@@ -448,7 +454,7 @@ mod tests {
             _ => assert!(false, "Expected Reverse"),
         }
         match &mutations[1].action {
-            Action::Append(s) => assert_eq!(s, "123"),
+            Action::Append(s, _) => assert_eq!(s, "123"),
             _ => assert!(false, "Expected Append"),
         }
     }
