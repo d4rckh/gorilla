@@ -9,9 +9,9 @@ use crate::char_sets;
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     String(String),
-    NumRange(u32, u32),
-    CharSet(Vec<char>),
     CharRange(u32, u32),
+    CharSet(Vec<char>),
+    NumRange(u32, u32),
     Strings(Vec<String>),
 }
 
@@ -19,9 +19,9 @@ impl Token {
     fn range(&self) -> u128 {
         match &self {
             Token::String(_) => 1,
-            Token::NumRange(start, end) => (end - start + 1) as u128,
-            Token::CharSet(chars) => chars.len() as u128,
             Token::CharRange(start, end) => (end - start + 1) as u128,
+            Token::CharSet(chars) => chars.len() as u128,
+            Token::NumRange(start, end) => (end - start + 1) as u128,
             Token::Strings(strings) => strings.len() as u128,
         }
     }
@@ -29,9 +29,9 @@ impl Token {
     fn get_max_size(&self) -> usize {
         match &self {
             Token::String(s) => s.len(),
-            Token::NumRange(_, end) => end.to_string().len(),
+            Token::CharRange(_, end) => end.to_string().len(),
             Token::CharSet(_) => 1,
-            Token::CharRange(_, _) => 1,
+            Token::NumRange(_, _) => 1,
             Token::Strings(items) => items.iter().map(|item| item.len()).max().unwrap_or(0usize),
         }
     }
@@ -41,9 +41,9 @@ impl Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Token::String(s) => write!(f, "string: {}", s),
-            Token::NumRange(start, end) => write!(f, "num_range: {} -> {}", start, end),
+            Token::CharRange(start, end) => write!(f, "num_range: {} -> {}", start, end),
             Token::CharSet(ch_set) => write!(f, "char_set: {}", ch_set.iter().collect::<String>()),
-            Token::CharRange(start, end) => write!(f, "char_range: {} -> {}", start, end),
+            Token::NumRange(start, end) => write!(f, "char_range: {} -> {}", start, end),
             Token::Strings(strings) => write!(f, "strings: {}", strings.join(" / ")),
         }
     }
@@ -60,7 +60,7 @@ fn parse_inner_brackets(cur: &str) -> Option<Token> {
         let start_num = cur.split('-').next().unwrap();
         let end_num = cur.split('-').nth(1).unwrap();
 
-        return Some(Token::CharRange(
+        return Some(Token::NumRange(
             start_num.parse::<u32>().unwrap(),
             end_num.parse::<u32>().unwrap(),
         ));
@@ -68,7 +68,7 @@ fn parse_inner_brackets(cur: &str) -> Option<Token> {
         let ch_start = cur.chars().next().unwrap();
         let ch_end = cur.chars().nth(2).unwrap();
 
-        return Some(Token::NumRange(ch_start as u32, ch_end as u32));
+        return Some(Token::CharRange(ch_start as u32, ch_end as u32));
     } else {
         // Combine character sets for multi-charset tokens
         let mut combined_charset = String::new();
@@ -150,6 +150,7 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
 
 pub struct TokenIter {
     pub toks: Vec<Token>,
+    pub ranges: Vec<u128>,
     indices: Vec<usize>,
     preallocated_string: String,
     pub current_index: u128,
@@ -176,23 +177,13 @@ pub fn token_iterator_from_start_end(tokens: &[Token], start: u128, end: u128) -
         preallocated_string: String::with_capacity(
             tokens.iter().map(|token| token.get_max_size()).sum::<usize>() + 3,
         ),
+        ranges: tokens.iter().map(|t| t.range()).collect(),
         indices: vec![0usize; tokens.len()],
     }
 }
 
 pub fn token_iterator(tokens: &[Token]) -> TokenIter {
-    let mut iter = TokenIter {
-        toks: tokens.to_owned(),
-        current_index: 0,
-        end_index: 0,
-        preallocated_string: String::with_capacity(
-            tokens.iter().map(|token| token.get_max_size()).sum::<usize>() + 3 
-        ),
-
-        indices: vec![0usize; tokens.len()],
-    };
-    iter.end_index = calculate_total_generations(&iter.toks);
-    iter
+    token_iterator_from_start_end(tokens, 0,   calculate_total_generations(tokens))
 }
 
 pub fn calculate_total_generations(tokens: &[Token]) -> u128 {
@@ -207,29 +198,26 @@ impl Iterator for TokenIter {
             return None;
         }
 
-        self.preallocated_string.clear();
         let mut temp_index = self.current_index;
-
 
         // rebuild self.indices
         for i in (0..self.toks.len()).rev() {
-            let range = self.toks.get(i).unwrap().range();
-            self.indices[i] = (temp_index % range) as usize;
-            temp_index /= range;
+            self.indices[i] = (temp_index % self.ranges[i]) as usize;
+            temp_index /= self.ranges[i];
         }
 
         for (i, tok) in self.toks.iter().enumerate() {
             match tok {
                 Token::String(s) => self.preallocated_string.push_str(s),
-                Token::NumRange(start, _) => {
-                    let c = char::from_u32(start + self.indices[i] as u32).unwrap();
+                Token::CharRange(start, _) => {
+                    let c = unsafe { std::char::from_u32_unchecked(start + self.indices[i] as u32) };
                     self.preallocated_string.push(c);
                 }
                 Token::CharSet(chars) => {
                     let c = chars[self.indices[i]];
                     self.preallocated_string.push(c);
                 }
-                Token::CharRange(start, _) => {
+                Token::NumRange(start, _) => {
                     write!(self.preallocated_string, "{}", start + self.indices[i] as u32).unwrap();
                 }
                 Token::Strings(strings) => {
@@ -239,7 +227,8 @@ impl Iterator for TokenIter {
         }
 
         self.current_index += 1;
-        Some(self.preallocated_string.to_owned())
+
+        Some(std::mem::take(&mut self.preallocated_string))
     }
 }
 
@@ -249,11 +238,11 @@ pub fn calculate_sample_size_bytes(tokens: &Vec<Token>) -> u128 {
     for tok in tokens {
         match tok {
             Token::String(s) => sample_str.push_str(s),
-            Token::NumRange(start, end) => {
+            Token::CharRange(start, end) => {
                 sample_str.push(char::from_u32((start + end) / 2).unwrap())
             }
             Token::CharSet(ch_set) => sample_str.push(*ch_set.get(0).unwrap()),
-            Token::CharRange(start, _) => sample_str.push_str(&start.to_string()),
+            Token::NumRange(start, _) => sample_str.push_str(&start.to_string()),
             Token::Strings(strings) => {
                 for _ in 0..(strings.iter().fold(0usize, |p, c| p + c.len()) / strings.len()) {
                     sample_str.push('X');
@@ -274,7 +263,7 @@ mod tests {
     #[test]
     fn tokenize_string_repeat() {
         let tokens = tokenize_format_string("hello{0-9}world");
-        assert_eq!(tokens[1], Token::NumRange('0' as u32, '9' as u32))
+        assert_eq!(tokens[1], Token::CharRange('0' as u32, '9' as u32))
     }
 
     #[test]
@@ -341,7 +330,7 @@ mod tests {
 
         // 10-20 parses as CharRange because inside_len >= 4 and contains '-'
         // and parse_inner_brackets uses parse::<u32> for both parts.
-        if let Some(Token::CharRange(s, e)) = parse_inner_brackets("10-20") {
+        if let Some(Token::NumRange(s, e)) = parse_inner_brackets("10-20") {
             assert_eq!(s, 10);
             assert_eq!(e, 20);
         } else {
