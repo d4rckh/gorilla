@@ -1,5 +1,7 @@
 use std::{
-    cmp::min, fmt::{self, Display}, vec
+    cmp::min,
+    fmt::{self, Display, Write},
+    vec,
 };
 
 use crate::char_sets;
@@ -8,7 +10,7 @@ use crate::char_sets;
 pub enum Token {
     String(String),
     NumRange(u32, u32),
-    CharSet(String),
+    CharSet(Vec<char>),
     CharRange(u32, u32),
     Strings(Vec<String>),
 }
@@ -23,6 +25,16 @@ impl Token {
             Token::Strings(strings) => strings.len() as u128,
         }
     }
+
+    fn get_max_size(&self) -> usize {
+        match &self {
+            Token::String(s) => s.len(),
+            Token::NumRange(_, end) => end.to_string().len(),
+            Token::CharSet(_) => 1,
+            Token::CharRange(_, _) => 1,
+            Token::Strings(items) => items.iter().map(|item| item.len()).max().unwrap_or(0usize),
+        }
+    }
 }
 
 impl Display for Token {
@@ -30,7 +42,7 @@ impl Display for Token {
         match self {
             Token::String(s) => write!(f, "string: {}", s),
             Token::NumRange(start, end) => write!(f, "num_range: {} -> {}", start, end),
-            Token::CharSet(ch_set) => write!(f, "char_set: {}", ch_set),
+            Token::CharSet(ch_set) => write!(f, "char_set: {}", ch_set.iter().collect::<String>()),
             Token::CharRange(start, end) => write!(f, "char_range: {} -> {}", start, end),
             Token::Strings(strings) => write!(f, "strings: {}", strings.join(" / ")),
         }
@@ -71,7 +83,7 @@ fn parse_inner_brackets(cur: &str) -> Option<Token> {
         }
 
         if !combined_charset.is_empty() {
-            return Some(Token::CharSet(combined_charset));
+            return Some(Token::CharSet(combined_charset.chars().collect()));
         }
     }
 
@@ -139,6 +151,7 @@ pub fn tokenize_format_string(input: &str) -> Vec<Token> {
 pub struct TokenIter {
     pub toks: Vec<Token>,
     indices: Vec<usize>,
+    preallocated_string: String,
     pub current_index: u128,
     pub end_index: u128,
 }
@@ -160,6 +173,9 @@ pub fn token_iterator_from_start_end(tokens: &[Token], start: u128, end: u128) -
         toks: tokens.to_owned(),
         current_index: start,
         end_index: min(calculate_total_generations(tokens), end),
+        preallocated_string: String::with_capacity(
+            tokens.iter().map(|token| token.get_max_size()).sum::<usize>() + 3,
+        ),
         indices: vec![0usize; tokens.len()],
     }
 }
@@ -169,6 +185,10 @@ pub fn token_iterator(tokens: &[Token]) -> TokenIter {
         toks: tokens.to_owned(),
         current_index: 0,
         end_index: 0,
+        preallocated_string: String::with_capacity(
+            tokens.iter().map(|token| token.get_max_size()).sum::<usize>() + 3 
+        ),
+
         indices: vec![0usize; tokens.len()],
     };
     iter.end_index = calculate_total_generations(&iter.toks);
@@ -187,8 +207,9 @@ impl Iterator for TokenIter {
             return None;
         }
 
-        let mut result = String::new();
+        self.preallocated_string.clear();
         let mut temp_index = self.current_index;
+
 
         // rebuild self.indices
         for i in (0..self.toks.len()).rev() {
@@ -199,26 +220,26 @@ impl Iterator for TokenIter {
 
         for (i, tok) in self.toks.iter().enumerate() {
             match tok {
-                Token::String(s) => result.push_str(s),
+                Token::String(s) => self.preallocated_string.push_str(s),
                 Token::NumRange(start, _) => {
                     let c = char::from_u32(start + self.indices[i] as u32).unwrap();
-                    result.push(c);
+                    self.preallocated_string.push(c);
                 }
                 Token::CharSet(chars) => {
-                    let c = chars.chars().nth(self.indices[i]).unwrap();
-                    result.push(c);
+                    let c = chars[self.indices[i]];
+                    self.preallocated_string.push(c);
                 }
                 Token::CharRange(start, _) => {
-                    result.push_str(&(start + self.indices[i] as u32).to_string());
+                    write!(self.preallocated_string, "{}", start + self.indices[i] as u32).unwrap();
                 }
                 Token::Strings(strings) => {
-                    result.push_str(strings.get(self.indices[i]).unwrap());
+                    self.preallocated_string.push_str(&strings[self.indices[i]]);
                 }
             }
         }
 
         self.current_index += 1;
-        Some(result)
+        Some(self.preallocated_string.to_owned())
     }
 }
 
@@ -231,7 +252,7 @@ pub fn calculate_sample_size_bytes(tokens: &Vec<Token>) -> u128 {
             Token::NumRange(start, end) => {
                 sample_str.push(char::from_u32((start + end) / 2).unwrap())
             }
-            Token::CharSet(ch_set) => sample_str.push(ch_set.chars().next().unwrap()),
+            Token::CharSet(ch_set) => sample_str.push(*ch_set.get(0).unwrap()),
             Token::CharRange(start, _) => sample_str.push_str(&start.to_string()),
             Token::Strings(strings) => {
                 for _ in 0..(strings.iter().fold(0usize, |p, c| p + c.len()) / strings.len()) {
