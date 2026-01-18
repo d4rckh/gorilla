@@ -1,6 +1,5 @@
 use std::{
-    fmt::{self, Display},
-    vec,
+    cmp::min, fmt::{self, Display}, vec
 };
 
 use crate::char_sets;
@@ -160,7 +159,7 @@ pub fn token_iterator_from_start_end(tokens: &[Token], start: u128, end: u128) -
     TokenIter {
         toks: tokens.to_owned(),
         current_index: start,
-        end_index: end,
+        end_index: min(calculate_total_generations(tokens), end),
         indices: vec![0usize; tokens.len()],
     }
 }
