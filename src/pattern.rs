@@ -61,8 +61,8 @@ fn parse_inner_brackets(cur: &str) -> Option<Token> {
         let end_num = cur.split('-').nth(1).unwrap();
 
         return Some(Token::NumRange(
-            start_num.parse::<u32>().unwrap(),
-            end_num.parse::<u32>().unwrap(),
+            start_num.parse::<u32>().expect("a number range provided, but first number is not parsable to uint32"),
+            end_num.parse::<u32>().expect("a number range provided, but the second number is not a parsable uin32"),
         ));
     } else if inside_len > 2 && cur.contains('-') {
         let ch_start = cur.chars().next().unwrap();
