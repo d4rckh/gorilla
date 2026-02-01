@@ -255,7 +255,7 @@ pub fn calculate_sample_size_bytes(tokens: &Vec<Token>) -> u128 {
             Token::CharRange(start, end) => {
                 sample_str.push(char::from_u32((start + end) / 2).unwrap())
             }
-            Token::CharSet(ch_set) => sample_str.push(*ch_set.get(0).unwrap()),
+            Token::CharSet(ch_set) => sample_str.push(*ch_set.first().unwrap()),
             Token::NumRange(start, _) => sample_str.push_str(&start.to_string()),
             Token::Strings(strings) => {
                 for _ in 0..(strings.iter().fold(0usize, |p, c| p + c.len()) / strings.len()) {
