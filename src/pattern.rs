@@ -61,8 +61,12 @@ fn parse_inner_brackets(cur: &str) -> Option<Token> {
         let end_num = cur.split('-').nth(1).unwrap();
 
         return Some(Token::NumRange(
-            start_num.parse::<u32>().expect("a number range provided, but first number is not parsable to uint32"),
-            end_num.parse::<u32>().expect("a number range provided, but the second number is not a parsable uin32"),
+            start_num
+                .parse::<u32>()
+                .expect("a number range provided, but first number is not parsable to uint32"),
+            end_num
+                .parse::<u32>()
+                .expect("a number range provided, but the second number is not a parsable uin32"),
         ));
     } else if inside_len > 2 && cur.contains('-') {
         let ch_start = cur.chars().next().unwrap();
@@ -175,7 +179,11 @@ pub fn token_iterator_from_start_end(tokens: &[Token], start: u128, end: u128) -
         current_index: start,
         end_index: min(calculate_total_generations(tokens), end),
         preallocated_string: String::with_capacity(
-            tokens.iter().map(|token| token.get_max_size()).sum::<usize>() + 3,
+            tokens
+                .iter()
+                .map(|token| token.get_max_size())
+                .sum::<usize>()
+                + 3,
         ),
         ranges: tokens.iter().map(|t| t.range()).collect(),
         indices: vec![0usize; tokens.len()],
@@ -183,7 +191,7 @@ pub fn token_iterator_from_start_end(tokens: &[Token], start: u128, end: u128) -
 }
 
 pub fn token_iterator(tokens: &[Token]) -> TokenIter {
-    token_iterator_from_start_end(tokens, 0,   calculate_total_generations(tokens))
+    token_iterator_from_start_end(tokens, 0, calculate_total_generations(tokens))
 }
 
 pub fn calculate_total_generations(tokens: &[Token]) -> u128 {
@@ -210,7 +218,8 @@ impl Iterator for TokenIter {
             match tok {
                 Token::String(s) => self.preallocated_string.push_str(s),
                 Token::CharRange(start, _) => {
-                    let c = unsafe { std::char::from_u32_unchecked(start + self.indices[i] as u32) };
+                    let c =
+                        unsafe { std::char::from_u32_unchecked(start + self.indices[i] as u32) };
                     self.preallocated_string.push(c);
                 }
                 Token::CharSet(chars) => {
@@ -218,7 +227,12 @@ impl Iterator for TokenIter {
                     self.preallocated_string.push(c);
                 }
                 Token::NumRange(start, _) => {
-                    write!(self.preallocated_string, "{}", start + self.indices[i] as u32).unwrap();
+                    write!(
+                        self.preallocated_string,
+                        "{}",
+                        start + self.indices[i] as u32
+                    )
+                    .unwrap();
                 }
                 Token::Strings(strings) => {
                     self.preallocated_string.push_str(&strings[self.indices[i]]);
