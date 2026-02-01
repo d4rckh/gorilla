@@ -14,12 +14,15 @@ pub struct ProgramArgs {
     #[clap(short = 'l', long = "one-line", help = "Print the output on one line")]
     pub one_line: bool,
 
+    #[clap(long = "no-progress", help = "Do not show the progress bar in stdout")]
+    pub no_progress_bar: bool,
+
     #[clap(
-        short = 't',
-        long = "timer",
-        help = "Show the amount of time it took to mutate/compute a word"
+        short = 'H',
+        long = "show-header",
+        help = "Print first 5 generations to stderr (works even when outputting to stdout)"
     )]
-    pub timer: bool,
+    pub show_header: bool,
 
     #[clap(
         short = 'p',
@@ -27,6 +30,9 @@ pub struct ProgramArgs {
         help = "Generate words from a pattern"
     )]
     pub pattern_input: Option<String>,
+
+    #[clap(long = "pattern-threads", help = "Threads used for pattern generation")]
+    pub pattern_threads: Option<u128>,
 
     #[clap(
         short = 'q',

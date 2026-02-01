@@ -1,26 +1,32 @@
 [package]
-author = "d4rckh"
 name = "gorilla"
-version = "1.1.0"
-edition = "2021"
+version = "1.5.0"
+edition = "2024"
+authors = ["andreiverse"]
+description = "Ultimate wordlist generation tool with pattern, mutation, and scraping capabilities"
+repository = "https://github.com/d4rckh/gorilla"
+license = "GPL-3.0"
+keywords = ["wordlist", "security", "password", "pentesting"]
+categories = ["command-line-utilities"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+crossbeam-channel = "0.5.15"
 clap = { version = "4.5.31", features = ["derive"] }
 colored = "3.0.0"
 csv = "1.3.1"
-regex = "1.6.0"
+regex = "1.9.1"
 ureq = "3.0.8"
-# reqwest = "0.11.11"
-# tokio = { version = "1.20.1", features = ["full"] }
 yaml-rust = "0.4.5"
 scraper = "0.23.1"
 markup5ever = "0.14.1"
+rayon = "1.11"
+indicatif = "0.18.3"
 
 [profile.release]
-# opt-level = 'z'     # Optimize for size.
-# lto = true          # Enable Link Time Optimization
-# codegen-units = 1   # Reduce number of codegen units to increase optimizations.
-# panic = 'abort'     # Abort on panic
-strip = "symbols"   # Strip symbols from binary
+opt-level = 3         # Optimize for speed
+lto = true            # Enable Link Time Optimization
+codegen-units = 1     # Reduce number of codegen units to increase optimizations
+panic = 'abort'       # Abort on panic
+strip = "symbols"     # Strip symbols from binary

@@ -1,4 +1,4 @@
-use scraper::{Html, Selector};
+use scraper::Html;
 use std::collections::BTreeSet;
 
 pub fn download_page(page_url: &str) -> Result<String, ureq::Error> {
@@ -8,12 +8,13 @@ pub fn download_page(page_url: &str) -> Result<String, ureq::Error> {
 }
 
 pub fn extract_words(page_body: &str) -> Vec<String> {
-    let page_body = just_body_html_content(page_body);
-    let document = Html::parse_fragment(&page_body);
-    let text_content: String = document.root_element().text().collect();
+    let document = Html::parse_document(page_body);
     let mut words_set = BTreeSet::new();
 
-    for word in text_content.split_whitespace() {
+    let mut clean_text = String::new();
+    traverse_extract(document.root_element(), &mut clean_text);
+
+    for word in clean_text.split_whitespace() {
         let filtered_word: String = word.chars().filter(|c| c.is_alphabetic()).collect();
         if filtered_word.len() > 4 {
             words_set.insert(filtered_word.to_lowercase());
@@ -23,33 +24,108 @@ pub fn extract_words(page_body: &str) -> Vec<String> {
     words_set.into_iter().collect()
 }
 
-/// Remove everything from page_body except the
-/// HTML within the <body></body> HTML tags.
-/// We also will ignore any content between any and all <script> tags,
-/// if there are any.
-/// If no <body> tag is found, or there's any other error,
-/// this function just silently returns the given
-/// all_html
-pub fn just_body_html_content(all_html: &str) -> String {
-    // Parse the HTML
-    let document = Html::parse_document(all_html);
-
-    // Select the <body> tag
-    let body_selector = Selector::parse("body").unwrap();
-    if let Some(body_element) = document.select(&body_selector).next() {
-        // Extract the inner HTML of <body>
-        let mut body_html = body_element.inner_html();
-
-        // Remove <script> elements
-        let script_selector = Selector::parse("script").unwrap();
-        for script in body_element.select(&script_selector) {
-            let script_html = script.html();
-            body_html = body_html.replace(&script_html, "");
+fn traverse_extract(element: scraper::ElementRef, output: &mut String) {
+    for node in element.children() {
+        if let Some(el) = scraper::ElementRef::wrap(node) {
+            let tag_name = el.value().name();
+            if tag_name != "script" && tag_name != "style" {
+                traverse_extract(el, output);
+            }
+        } else if let Some(text) = node.value().as_text() {
+            output.push_str(text);
+            output.push(' ');
         }
+    }
+}
 
-        return body_html;
+#[cfg(test)]
+mod tests {
+    use super::extract_words;
+
+    #[test]
+    fn basic_scrape() {
+        let html = "<!doctype html><html><head></head><body> \
+        <div> <h1>Example Domain</h1> \
+        <p>This domain is for use in illustrative examples in documents. You may use this \
+        domain in literature without prior coordination or asking for permission.</p> \
+        </div> \
+        </body> \
+        </html>";
+        let words = extract_words(html);
+
+        assert!(words.contains(&"domain".to_string()));
+    }
+    #[test]
+    fn ignore_script_tag() {
+        let html = "<!doctype html><html><head></head><body><script>Some javascript</script> \
+        <div> <h1>Example Domain</h1> \
+        <p>This domain is for use in illustrative examples in documents. You may use this \
+        domain in literature without prior coordination or asking for permission.</p> \
+        </div> \
+        </body> \
+        </html>";
+        let words = extract_words(html);
+
+        assert!(words.contains(&"domain".to_string()));
+        assert!(!words.contains(&"javascript".to_string()));
     }
 
-    // If no <body> tag is found, return the original HTML
-    all_html.to_string()
+    #[test]
+    fn ignore_mulitple_script_tags() {
+        let html = "<!doctype html><html><head></head><body><script>Some javascript</script> \
+        <div> <h1>Example Domain</h1> \
+        <p>This domain is for use in illustrative examples in documents. You may use this \
+        domain in literature without prior coordination or asking for permission.</p> \
+        </div> \
+        <script>second script</script> \
+        </body> \
+        </html>";
+        let words = extract_words(html);
+
+        assert!(words.contains(&"domain".to_string()));
+        assert!(!words.contains(&"javascript".to_string()));
+        assert!(!words.contains(&"second".to_string()));
+    }
+
+    #[test]
+    fn ignore_style_tag() {
+        let html = "<html><body><style>body { color: red; }</style> \
+        <p>visible text</p></body></html>";
+        let words = extract_words(html);
+
+        assert!(words.contains(&"visible".to_string()));
+        // 'red' is < 4 chars so filtered anyway? "color" is 5.
+        // "color" should be ignored.
+        assert!(!words.contains(&"color".to_string()));
+    }
+
+    #[test]
+    fn nested_tags_extraction() {
+        let html = "<div><p><span>Deep</span> text</p></div>";
+        let words = extract_words(html);
+        assert!(words.is_empty());
+        // "Deep" is 4 chars, filtered out (>4 check).
+        // "text" is 4 chars.
+        // Wait, extract_words filters if len > 4.
+        // "Deep" -> 4 len. "text" -> 4 len.
+        // Neither will be included.
+        // Let's use longer words.
+        let html = "<div><p><span>Deeper</span> meaningful</p></div>";
+        let words = extract_words(html);
+        assert!(words.contains(&"deeper".to_string()));
+        assert!(words.contains(&"meaningful".to_string()));
+    }
+
+    #[test]
+    fn malformed_html() {
+        let html = "Just text no tags longer";
+        let words = extract_words(html);
+        assert!(words.contains(&"longer".to_string()));
+    }
+
+    #[test]
+    fn empty_input() {
+        let words = extract_words("");
+        assert!(words.is_empty());
+    }
 }

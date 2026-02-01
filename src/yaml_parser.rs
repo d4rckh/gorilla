@@ -5,20 +5,20 @@ use colored::Colorize;
 
 use crate::{
     formatting::{FormatField, FormatPart, FormatSet, FormattingSets},
-    mutation::{parse_mutation_string, MutationSet},
+    mutation::{MutationSet, parse_mutation_string},
 };
 
-pub fn get_mutation_sets(yaml_input: &str) -> Vec<MutationSet> {
+pub fn parse_mutation_yaml(yaml_input: &str) -> Vec<MutationSet> {
     let mut result: Vec<MutationSet> = vec![];
 
     let docs = YamlLoader::load_from_str(yaml_input).unwrap();
 
     let doc = &docs[0];
 
-    eprintln!(
-        "gorilla: loading {} yaml mutations",
+    crate::logging::info(&format!(
+        "loading {} yaml mutations",
         doc["name"].as_str().unwrap().purple()
-    );
+    ));
 
     for mutation_set in doc["mutation_sets"].as_vec().unwrap() {
         let mut mutation_strings: Vec<String> = vec![];
@@ -40,10 +40,10 @@ pub fn parse_formatting_yaml(yaml_input: &str) -> FormattingSets {
     let doc = &docs[0];
     let formatting_name = doc["name"].as_str().unwrap();
 
-    eprintln!(
-        "gorilla: loading {} formatting sets",
+    crate::logging::info(&format!(
+        "loading {} formatting sets",
         formatting_name.purple()
-    );
+    ));
 
     let mut format_sets: Vec<FormatSet> = Vec::new();
     let mut format_fields: Vec<FormatField> = Vec::new();
@@ -102,8 +102,26 @@ pub fn parse_formatting_yaml(yaml_input: &str) -> FormattingSets {
     }
 
     FormattingSets {
-        name: formatting_name.to_owned(),
+        _name: formatting_name.to_owned(),
         fields: format_fields,
         sets: format_sets,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_mutation_yaml;
+
+    #[test]
+    fn yaml_parse_test() {
+        let mutation_sets = parse_mutation_yaml(
+            "name: alphabet
+mutation_sets:
+  - [ wipe, \"append:{a-z}\" ] # => a, b, c, ..., z",
+        );
+
+        let mutation_result = mutation_sets[0].perform("word");
+
+        assert_eq!(mutation_result.mutated_words.len(), 26);
     }
 }

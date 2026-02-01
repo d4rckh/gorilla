@@ -6,7 +6,6 @@ gorilla is the ultimate wordlist tool packing a lot of amazing utilities like:
 - scrap a web page and build a wordlist from its words (like [cewl](https://github.com/digininja/CeWL))
 - extending existing wordlists using mutations (like [hashcat's rule based attack](https://hashcat.net/wiki/doku.php?id=rule_based_attack))
 
-
 ## installing with cargo
 
 With Rust's [Cargo](https://www.rust-lang.org/tools/install) installed, run `cargo install --git https://github.com/d4rckh/gorilla --branch main`
@@ -35,7 +34,19 @@ If you want to save the output to a file, you can use the `--output-file`/`-o` a
 
 ![image](https://user-images.githubusercontent.com/35298550/183973643-3191f7a0-7dda-4e4f-8f10-eaaa4d748874.png)
 
-Gorilla now also supports character sets. They are defined in `src/char_sets.rs`. Here are some examples of patterns that use them: `{l}` => a b c d ... z; `{u}` => A B C D ... Z; `{d}` => 1 2 3 4 ... 9; `{s}` => (space) ! " # $ ... ~ 
+Gorilla now also supports character sets. They are defined in `src/char_sets.rs`. Here are some examples of patterns that use them: `{l}` => a b c d ... z; `{u}` => A B C D ... Z; `{d}` => 1 2 3 4 ... 9; `{s}` => (space) ! " # $ ... ~. You can combine multiple of them, so `{luds}` would result in a char set containing all other char sets described ([#45](https://github.com/andreiverse/gorilla/pull/45)). 
+
+If you use a range and each end has 1 character, you will be doing a character range. For example: 
+- `{a-z}` will result in adding each character of the alphabet, one at a time: a, b, c, d, e, f, g,...., x, y and z;
+- `{a-c}` will result in adding only a, b and c, one at a time;
+- `{0-9}` will result in adding only 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, only one at a time. 
+If you use a range and one of the ends have more than 1 characters, each end will be parsed as a unsigned 32 bit number and result a number range instead. For example:
+- `{2020-2026}` will result in adding 2020, 2021, 2022, 2023, 2024, 2025 and 2026, one at a time.
+- `{1-100}` will result in adding numbers from 1 to 100 (inclusive), one at a time.
+
+> Experimental: If the inside of your brackets contains a comma, the string will be split by it and add each part, one at a time, for example {Jan,Feb,Mar} will result in adding Jan, Feb and Mar, one at a time.
+
+Optionally, you can spawn multiple pattern threads using the `--pattern-threads` parameter. I recommend you set this to the maximum amount of threads you have available on your computer.
 
 ## modifying existing wordlists using mutations/rules
 
@@ -114,7 +125,7 @@ gorilla --mutations-file muts.yml
 
 ## scraping web pages for words
 
-(For now) you can only scrap a specific page for words and styles and script tags won't be removed, this wil be implemented in a future release of gorilla. 
+(For now) you can only scrap a specific page for words. Styles and script tags are automatically removed. 
 
 You can specify a page using the `--from-website`/`-w` argument. For example
 
@@ -179,7 +190,9 @@ If you run the set, you will be prompted for each field and the usernames will b
 
 ![image](https://user-images.githubusercontent.com/35298550/184354813-fd008441-3188-4ef6-98b0-9e4573956d8c.png)
 
-(of course, you can use the other arguments normally, like `--mutations-file`/`-f` to generate new words via mutations or `--output-file`/`-o` to save the words)
+> note: don't make the mutations inside formatting sets too complex, they will all run single threaded! Mix the formatting file with a mutation file to run parallel mutations. Do not use combinatorical patterns inside formatting sets' mutation sets. 
+
+> tip: you can use the other arguments normally, like `--mutations-file`/`-f` to generate new words via mutations or `--output-file`/`-o` to save the words
 
 Each formatting set is an array of strings that are later appended. So `["{f_name}", "{l_name}"]` is equivalent to `["{f_name}{l_name}"]`. Instead of a string, you can supply an array, this allows you to apply mutations that you have used before to extend wordlists.
 
@@ -187,7 +200,7 @@ Each formatting set is an array of strings that are later appended. So `["{f_nam
 - [ "{f_name}_", [ "{l_name}", [ reverse ] ] ]
 ```
 
-If the `f_name` is `joe` and `l_name` is `doe`, the resulting formatting will generate `joe_eod`. Mutations useful in formatting sets are `remove_last_letter`, `remove_first_letter` and `1st_letter`
+If the `f_name` is `joe` and `l_name` is `doe`, the resulting formatting will generate `joe_eod`. Mutations useful in formatting sets are `remove_last_letter`, `remove_first_letter` and `1st_letter`.
 
 If you want to apply a formatting sets to many user profiles, you can use the `--with-csv`/`-c` argument to supply a CSV file. For the `basic_usernames` formatting set, the CSV should be formatted like this:
 
@@ -200,3 +213,26 @@ robert,smith
 
 ![image](https://user-images.githubusercontent.com/35298550/184476337-f8f23f7d-0902-483c-9202-6866ad9e371d.png)
 
+# all mutations available:
+
+## basic
+
+- append:PATTERN - appends a pattern or just a text
+- prepend:PATTERN - prepends a pattern or just a text
+- replace:TEXT1:TEXT2 - replaces TEXT1 with TEXT2 
+- reverse - reverses the word
+- uppercase_all - uppercases everything
+- lowercase_all - lowercases everything
+- remove_first_letter - remove first letter
+- remove_last_letter - removes last letter
+- capitalize - capitalizes the word (first letter uppercase, rest lowercase)
+- toggle_case - toggles the case of each character
+
+## advanced
+
+- if_length:COND - wipes the word if it doesnt match the condition on word length (COND = `>NUMBER`/`<NUMBER`/`=NUMBER`)
+- if_contains:TEXT - same as above but wipes if it doesnt contain a word
+- clone - clones the word
+- wipe - removes everything from the word
+- 1st_letter - keeps everything but first letter
+- nothing - does nothing
